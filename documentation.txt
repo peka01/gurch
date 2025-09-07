@@ -1,0 +1,54 @@
+Here's a breakdown of the current implementation in `GameBoard.tsx` compared to the specified rules:
+
+**What's Implemented Correctly:**
+
+*   **Card Dealing:** The `dealCards` function correctly shuffles and deals 5 cards to each player (4 down, 1 up). It also determines the first player to act based on the highest face-up card.
+*   **Card Values:** The `CARD_VALUES` constant correctly maps card ranks to their point values (2-14).
+*   **Swapping Phases:** The game loop correctly progresses through a complex series of swapping phases (`FIRST_SWAP_DECISION`, `OTHERS_SWAP_DECISION`, `VOTE_SWAP`, `FINAL_SWAP_DECISION`, `FINAL_SWAP_ACTION`) before gameplay begins. This matches the user's clarification.
+*   **Bot Logic:** There's logic for bots to make decisions during swapping and gameplay (`handleBotSwapDecision`, `handleBotPlay`, `findBestPlayForBot`).
+*   **UI Components:** The component renders `PlayerDisplay`, `CardComponent`, `ActionPanel`, etc., to show the game state.
+
+**Discrepancies and Areas for Improvement:**
+
+1.  **Gameplay Logic (`handlePlayCards` and `validatePlay`):**
+    *   **Winning a Round:** The current logic for winning a round is based on card values but seems incomplete. It checks if `selectedCards[0].value > gameState.lastPlayedHand[0].value`. This works for single cards but doesn't account for ties (last player to play the same high rank wins) or situations where the round winner isn't the player who played the highest card overall in the round, but the one who beat the previous play.
+    *   **Sacrificing Cards:** The `validatePlay` function correctly identifies when a player *must* sacrifice their lowest cards. However, the rule "om alla kort är lägre får man offra sitt/sina lägsta kort" is not fully enforced for all cases. The validation seems to only check if the *selected* cards are the lowest, not if the player *could have* played a higher card.
+    *   **Round Winner Determination:** The `roundWinnerId` is updated play-by-play. The actual winner of a trick is only known after everyone has played. The logic should wait until the round is over to determine the winner. The `startNextRound` function correctly uses the `roundWinnerId` to determine the next leader.
+
+2.  **Scoring Logic (`handleGameOver`):**
+    *   **Winner's Prize:** The current `handleGameOver` function correctly identifies the game winner (the one with no cards left) and the "loser" (the one with the highest card sum remaining). However, it *doesn't* implement the key scoring rule: "Spelaren som vinner får den summan som den som hade högst valör eller sammanlagd valör hade på sitt/sina kort." The game just ends; no score is awarded.
+    *   **Final Hand Value:** The scoring should be based on the value of the cards played in the *final* round when a player goes out, not the cards left in other players' hands. The current logic sums up the remaining cards in the opponents' hands.
+
+3.  **Minigame:**
+    *   There is no implementation of the minigame for tie-breaking.
+
+**My Plan to Address These Issues:**
+
+Here's my task list to align the code with the rules:
+
+1.  **Refactor Round and Game Logic:**
+    *   Modify the main game loop and state to properly track the round's progress.
+    *   Create a new state variable, `trickPlays`, to store the cards played by each player in the current trick.
+    *   At the end of a round (when all players have played), a new function `determineTrickWinner` will analyze `trickPlays` to find the winner based on the rules (highest card, last player in case of a tie).
+    *   Update `startNextRound` to use this new winner determination logic.
+
+2.  **Correct Gameplay and Validation:**
+    *   Update `validatePlay` to be stricter about forcing a player to beat the lead hand if they are able.
+    *   Ensure the "sacrifice lowest card" rule is correctly applied only when a player truly cannot play a higher card.
+
+3.  **Implement Correct Scoring:**
+    *   In `handleGameOver`, capture the final hand played by the winner.
+    *   Calculate the value of the final hands played by all other players in that last round.
+    *   Identify the player with the highest-value final play.
+    *   The game winner's score should be set to the value of that highest-scoring opponent's play. This will likely involve adding a `score` or `winnings` field to the `Player` interface.
+
+4.  **Implement the Minigame:**
+    *   In `handleGameOver`, check for ties in the final scores (both for winning and losing).
+    *   If a tie is detected, instead of ending the game, transition to a new `MINIGAME` phase.
+    *   Create a new component or logic within `GameBoard` to handle the minigame flow: deal 3 cards, allow a swap, and play a final round to break the tie.
+
+5.  **Refine Bot AI:**
+    *   Improve the `findBestPlayForBot` logic to align with the more nuanced round-winning and sacrificing rules.
+
+I will start with the first task: **Refactor Round and Game Logic**. This is the foundation for the other changes.
+I will start by modifying `types.ts` to include the new state needed for tracking trick plays.

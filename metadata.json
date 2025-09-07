@@ -1,0 +1,5 @@
+{
+  "name": "Gurch Card Game",
+  "description": "An online implementation of the card game Gurch, where players aim to go out with the lowest possible cards. Features dynamic AI-powered avatars and commentary.",
+  "requestFramePermissions": []
+}
