@@ -1,24 +1,45 @@
-Here is a summary of the rules I have understood so far:
-
 **Objective:**
-*   Be the first to get rid of all your cards. The player who finishes with the lowest value card(s) on their last play wins the pot.
+*   Be the first to get rid of all your cards. The player who goes out with the lowest value card(s) on their final play wins the pot.
+*   Aces are high, 2s are low. As a player, you need both high cards (to win rounds) and low cards (to win the game).
+
+**Dealing and Swapping:**
+
+*   **Step 1: The Deal**
+    *   The dealer deals 4 face-down cards to each player, then one face-up card.
+    *   The player with the highest face-up card starts the action.
+    *   Tie-breaker: If ranks are tied, the player who was dealt their card last wins the tie.
+
+*   **Step 2: First Swap**
+    *   The starting player decides to either start the game immediately or swap cards.
+    *   If they choose to swap, they select which cards to discard, and receive an equal number of new cards.
+    *   The other players can then choose to swap the *same number* of cards, or to "stand pat" (not swap).
+    *   Players who stand pat are not included in the final swap (Step 3).
+
+*   **Step 3: Final Swap (Vote)**
+    *   Players who participated in the first swap now vote on how many cards (1-5) to discard in a final round.
+    *   The number with the majority of votes wins.
+    *   Tie-breaker: If there's no majority, the lowest vote count wins.
+    *   Players who voted for a different number get a choice to participate in this final swap or not.
+    *   **Special 1-Card Swap Rule:** If the vote result is 1, players are shown a face-up card from the deck. They can choose to take it, or reject it and take the next face-down card from the deck.
+    *   For swaps of 2 or more cards, new cards are dealt face-down.
 
 **Gameplay:**
-*   A player starts a round by playing one or more cards of the same rank (e.g., two Kings).
-*   Other players must play the same number of cards of an equal or higher rank (e.g., two Kings or two Aces).
-*   If a player cannot play a valid set of cards, they must discard their lowest card(s). The number of cards discarded must match the number of cards led in the round.
-*   The player who played the highest-ranking cards wins the round and starts the next one.
-*   If multiple players play the same highest rank, the last one to play wins.
-*   If no one can beat the lead cards, the original player who started the round plays again.
+
+*   The player with the highest card from the initial deal starts the first round.
+*   A player can lead with 1-4 cards of the same rank (e.g., two Kings).
+*   Other players must follow with the same number of cards of an equal or higher rank.
+*   **Winning a Round:** To win a round, you must play a valid set of cards (all same rank) that is equal to or higher than the current winning play. The last person to play the highest rank wins the round and leads the next.
+*   **Forced Plays:** If you can play a valid, winning set, you *must* do so.
+*   **"Beat and Sacrifice":** This is a special move. If you cannot play a valid set (e.g., you don't have two Kings to beat two 8s), but you *do* have a single card that is higher than the lead (e.g., an Ace), you *must* play that higher card. Then, to match the card count, you *must* also play your lowest-value card(s). For example, if the lead is two 8s and your hand is Ace, King, 7, 3, 2, you could play the Ace and the 2, or the King and the 2.
+*   **Sacrificing:** If you cannot play a valid, winning set, you must "sacrifice" by playing your lowest value card(s). The number of cards must match the lead. A sacrifice play cannot win a round.
+*   If no one can beat the lead cards, the original player who started the round wins it and plays again.
 
 **Scoring:**
 *   Scoring is based on the cards played in the final round (when a player goes out).
 *   The player who went out with the lowest total card value wins.
-*   The winner's prize is the total value of the cards held by the player with the *highest* total value in that final round.
-*   Card values are 2-10 for number cards, Jack=11, Queen=12, King=13, Ace=14.
-*   There are different rooms with multipliers (1x to 10x) that affect the final winnings.
+*   The winner's prize is the total value of the cards played by the player with the *highest* total value in that final round.
 
-**Tie-breaker ("Minigame"):**
-*   If there's a tie for the lowest (winner) or highest (score), the tied players enter a minigame.
+**Minigame (Tie-breaker):**
+*   If there's a tie for the winner (lowest final play) or the loser (highest final play), tied players enter a minigame.
 *   Each is dealt 3 cards. They can keep them or swap for a new set of 3.
 *   A new round is played among these players to determine the final winner/loser.

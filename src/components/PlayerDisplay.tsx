@@ -6,18 +6,25 @@ import CardComponent from './Card';
 interface PlayerDisplayProps {
   player: Player;
   isCurrentPlayer: boolean;
+  isStarter: boolean;
   positionClass: string;
   faceUpCard?: Card;
   gamePhase: GamePhase;
   swappingCards?: Card[];
 }
 
-const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, positionClass, faceUpCard, gamePhase, swappingCards }) => {
+const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, isStarter, positionClass, faceUpCard, gamePhase, swappingCards }) => {
   const isBottomPlayer = positionClass.includes('bottom');
+  
+  const ringClass = isCurrentPlayer 
+    ? 'ring-4 ring-cyan-400 shadow-lg' 
+    : isStarter && gamePhase === GamePhase.DEALING 
+    ? 'ring-4 ring-yellow-400 shadow-lg'
+    : 'ring-2 ring-gray-600';
 
   return (
     <div className={`absolute transform ${positionClass} transition-all duration-500 z-10`}>
-      <div className={`flex flex-col items-center p-2 rounded-lg bg-black/40 ${isCurrentPlayer ? 'ring-4 ring-cyan-400 shadow-lg' : 'ring-2 ring-gray-600'}`}>
+      <div className={`flex flex-col items-center p-2 rounded-lg bg-black/40 ${ringClass}`}>
         <div className="relative">
           <img src={player.avatar} alt={player.name} className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-yellow-400 object-cover" />
           {player.isDealer && (

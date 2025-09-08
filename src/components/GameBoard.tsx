@@ -115,10 +115,15 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
           }
           break;
         case GamePhase.FIRST_SWAP_DECISION:
+        case GamePhase.FIRST_SWAP_OTHERS_DECISION:
            console.log(`[DEBUG] FIRST_SWAP_DECISION - Current player: ${gameState.players[gameState.currentPlayerIndex]?.name}, Is human: ${gameState.players[gameState.currentPlayerIndex]?.isHuman}`);
-           if (!gameState.players[gameState.currentPlayerIndex].isHuman) {
-                console.log(`[DEBUG] Bot decision - calling handleBotSwapDecision`);
-                timeoutId = setTimeout(() => handleBotSwapDecision(true), 2000); // Bot decides to swap
+           if (gameState.players[gameState.currentPlayerIndex].hasStoodPat) {
+                const nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+                setGameState(prev => ({...prev, currentPlayerIndex: nextPlayerIndex}));
+            } else if (!gameState.players[gameState.currentPlayerIndex].isHuman) {
+                console.log(`[DEBUG] Bot decision - calling handleSwapDecision`);
+                const wantsToSwap = Math.random() > 0.3; // 70% chance to swap
+                timeoutId = setTimeout(() => handleSwapDecision(wantsToSwap), 2000); 
             } else {
                 console.log(`[DEBUG] Human decision - waiting for ActionPanel interaction`);
             }
@@ -129,7 +134,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
           return; // Exit early to prevent further processing
         case GamePhase.OTHERS_SWAP_DECISION:
              console.log(`[DEBUG] OTHERS_SWAP_DECISION - Current player: ${gameState.players[gameState.currentPlayerIndex]?.name}, Is human: ${gameState.players[gameState.currentPlayerIndex]?.isHuman}`);
-             if (!gameState.players[gameState.currentPlayerIndex].isHuman) {
+             if (gameState.players[gameState.currentPlayerIndex].hasStoodPat) {
+                const nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+                setGameState(prev => ({...prev, currentPlayerIndex: nextPlayerIndex}));
+            } else if (!gameState.players[gameState.currentPlayerIndex].isHuman) {
                 console.log(`[DEBUG] Bot decision - calling handleOtherPlayerSwap(true)`);
                 timeoutId = setTimeout(() => handleOtherPlayerSwap(true), 2000);
              } else {
@@ -140,10 +148,24 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         case GamePhase.OTHERS_SWAP_ACTION:
             // Human player is selecting cards for the second swap - no automatic action needed
             return; // Exit early to prevent further processing
+        case GamePhase.VOTE_SWAP_DECISION:
+            const decider = gameState.players[gameState.currentPlayerIndex];
+            if (decider.hasStoodPat) {
+                const nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+                setGameState(prev => ({...prev, currentPlayerIndex: nextPlayerIndex}));
+            } else if (!decider.isHuman && decider.wantsToVote === undefined) {
+                // Bot decides whether to participate in the vote
+                const wantsToVote = Math.random() > 0.2; // 80% chance to vote
+                timeoutId = setTimeout(() => handleVoteDecision(wantsToVote), 1500);
+            }
+            return;
         case GamePhase.VOTE_SWAP:
              const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-             if (!currentPlayer.isHuman && !currentPlayer.hasVoted) {
-                 const vote = Math.floor(Math.random() * 5) + 1;
+             if (currentPlayer.hasStoodPat) {
+                const nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+                setGameState(prev => ({...prev, currentPlayerIndex: nextPlayerIndex}));
+            } else if (!currentPlayer.isHuman && !currentPlayer.hasVoted) {
+                 const vote = Math.floor(Math.random() * 5) + 1; // Bots won't vote 0 for now
                  timeoutId = setTimeout(() => handleVote(vote), 1500);
              }
             // For human players, do nothing - let them interact via ActionPanel
@@ -323,6 +345,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         }
     }
     
+    setGameState(prev => ({ ...prev, starterPlayerId: newPlayers[starterIndex].id }));
+    
     setTimeout(() => {
       console.log("[DEBUG] After dealing, hand sizes:");
       newPlayers.forEach(p => console.log(`  ${p.name}: ${p.hand.length} cards`));
@@ -341,21 +365,84 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
   };
   
   const handleSwapDecision = (wantsToSwap: boolean) => {
-    console.log(`[DEBUG] handleSwapDecision called with wantsToSwap: ${wantsToSwap}`);
-    console.log(`[DEBUG] Current player index: ${gameState.currentPlayerIndex}`);
-    console.log(`[DEBUG] Current player: ${gameState.players[gameState.currentPlayerIndex]?.name}`);
-    console.log(`[DEBUG] Is human: ${gameState.players[gameState.currentPlayerIndex]?.isHuman}`);
     setTimer(0);
-    if (!wantsToSwap) {
-        addCommentary(`${gameState.players[gameState.currentPlayerIndex].name} wants to start the game immediately!`);
-        setGameState(prev => ({...prev, gamePhase: GamePhase.GAMEPLAY, roundLeaderIndex: prev.firstPlayerToAct, currentPlayerIndex: prev.firstPlayerToAct}));
-        return;
-    }
-    addCommentary(`${gameState.players[gameState.currentPlayerIndex].name} wants to swap cards.`);
-    console.log(`[DEBUG] Transitioning to FIRST_SWAP_ACTION phase`);
-    const humanPlayerIndex = gameState.players.findIndex(p => p.isHuman);
-    console.log(`[DEBUG] Setting currentPlayerIndex to human player: ${humanPlayerIndex}`);
-    setGameState(prev => ({...prev, gamePhase: GamePhase.FIRST_SWAP_ACTION, currentPlayerIndex: humanPlayerIndex}));
+    const playerIndex = gameState.currentPlayerIndex;
+    const player = gameState.players[playerIndex];
+
+    setGameState(prev => {
+        const newPlayers = [...prev.players];
+        newPlayers[playerIndex].hasMadeFirstSwapDecision = true;
+
+        if (!wantsToSwap) {
+            newPlayers[playerIndex].hasStoodPat = true;
+            addCommentary(`${player.name} stands pat.`);
+        } else {
+            addCommentary(`${player.name} wants to swap cards.`);
+        }
+
+        // Find next player for the first swap decision round
+        let nextPlayerIndex = -1;
+        for (let i = 1; i < newPlayers.length; i++) {
+            const potentialIndex = (playerIndex + i) % newPlayers.length;
+            if (!newPlayers[potentialIndex].hasMadeFirstSwapDecision) {
+                nextPlayerIndex = potentialIndex;
+                break;
+            }
+        }
+        
+        if (wantsToSwap && player.isHuman) {
+            return {...prev, players: newPlayers, gamePhase: GamePhase.FIRST_SWAP_ACTION};
+        }
+
+        if (nextPlayerIndex === -1) {
+            // All players made their initial decision. Time to see who swaps.
+            const swappingPlayers = newPlayers.filter(p => !p.hasStoodPat);
+            if (swappingPlayers.length === 0) {
+                addCommentary(`No one wants to swap. Let the voting begin!`);
+                return {...prev, players: newPlayers, gamePhase: GamePhase.VOTE_SWAP_DECISION, currentPlayerIndex: prev.firstPlayerToAct };
+            }
+
+            const firstSwapperIndex = newPlayers.findIndex(p => !p.hasStoodPat);
+            addCommentary(`Now, ${newPlayers[firstSwapperIndex].name} will start the swap.`);
+
+            if (newPlayers[firstSwapperIndex].isHuman) {
+                return {...prev, players: newPlayers, gamePhase: GamePhase.FIRST_SWAP_ACTION, currentPlayerIndex: firstSwapperIndex };
+            } else {
+                // Handle bot's first swap action immediately
+                const botPlayer = newPlayers[firstSwapperIndex];
+                const hand = [...botPlayer.hand].sort((a,b) => b.value - a.value); // Sort descending to find high cards
+                const cardsToSwap = hand.slice(0, 2); // Example: bot swaps 2 highest cards
+                
+                // Perform the swap for the bot
+                const newDeck = [...prev.deck];
+                let newHand = botPlayer.hand.filter(c => !cardsToSwap.some(sc => sc.rank === c.rank && sc.suit === c.suit));
+                for(let i = 0; i < cardsToSwap.length; i++) {
+                    if (newDeck.length > 0) newHand.push(newDeck.pop()!);
+                }
+                newPlayers[firstSwapperIndex].hand = newHand;
+
+                addCommentary(`${botPlayer.name} swaps ${cardsToSwap.length} cards.`);
+
+                const nextPlayerAfterBotSwapIndex = (firstSwapperIndex + 1) % newPlayers.length;
+
+                return {
+                    ...prev,
+                    players: newPlayers,
+                    deck: newDeck,
+                    gamePhase: GamePhase.OTHERS_SWAP_DECISION,
+                    currentPlayerIndex: nextPlayerAfterBotSwapIndex,
+                    swapAmount: cardsToSwap.length,
+                };
+            }
+        }
+        
+        return {
+            ...prev,
+            players: newPlayers,
+            gamePhase: GamePhase.FIRST_SWAP_OTHERS_DECISION,
+            currentPlayerIndex: nextPlayerIndex,
+        };
+    });
   }
   
   const handleBotSwapDecision = (wantsToSwap: boolean) => {
@@ -401,10 +488,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       }
       
       const validSwapPhases = [
-        GamePhase.FIRST_SWAP_DECISION,
         GamePhase.FIRST_SWAP_ACTION,
         GamePhase.OTHERS_SWAP_ACTION,
-        GamePhase.OTHERS_SWAP_DECISION
       ];
 
       if (!validSwapPhases.includes(gameState.gamePhase)) {
@@ -452,7 +537,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
           const nextPlayerIndex = (playerIndex + 1) % newPlayers.length;
           addCommentary(`${player.name} swaps ${amount} card(s).`);
 
-          if (prev.gamePhase === GamePhase.FIRST_SWAP_ACTION || prev.gamePhase === GamePhase.FIRST_SWAP_DECISION) {
+          if (prev.gamePhase === GamePhase.FIRST_SWAP_ACTION) {
               return {
                   ...prev, players: newPlayers, deck: newDeck,
                   gamePhase: GamePhase.OTHERS_SWAP_DECISION,
@@ -576,7 +661,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
   const handleVote = (amount: number) => {
       setTimer(0);
       const playerIndex = gameState.currentPlayerIndex;
-      addCommentary(`${gameState.players[playerIndex].name} votes to swap ${amount} card(s).`);
+      const voteMessage = amount === 0 ? "not to swap any cards" : `to swap ${amount} card(s)`;
+      addCommentary(`${gameState.players[playerIndex].name} votes ${voteMessage}.`);
       setGameState(prev => {
           const newPlayers = [...prev.players];
           newPlayers[playerIndex].swapVote = amount;
@@ -593,7 +679,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
 
           if (nextVoterIndex === -1) {
               // All have voted
-              const votes = newPlayers.filter(p => p.swapVote).map(p => p.swapVote!);
+              const votes = newPlayers.filter(p => p.swapVote !== undefined).map(p => p.swapVote!);
               const voteCounts: {[key:number]: number} = {};
               let maxVotes = 0;
               let winningVote = 0;
@@ -618,9 +704,16 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                   winningVote = minVote;
               }
               
+              if (winningVote === 0) {
+                  addCommentary(`The vote is in! No cards will be swapped. Let the game begin!`);
+                  setShowGameplayStart(true);
+                  setTimeout(() => setShowGameplayStart(false), 4000);
+                  return { ...prev, players: newPlayers, gamePhase: GamePhase.GAMEPLAY, currentPlayerIndex: prev.firstPlayerToAct, roundLeaderIndex: prev.firstPlayerToAct };
+              }
+
               addCommentary(`The vote is in! Players will swap ${winningVote} card(s).`);
               
-              const firstDeciderIndex = newPlayers.findIndex(p => !p.hasStoodPat && p.swapVote !== winningVote);
+              const firstDeciderIndex = newPlayers.findIndex(p => p.wantsToVote && p.swapVote !== winningVote);
               
               if (firstDeciderIndex === -1) {
                   // All winners, proceed to action
@@ -636,6 +729,41 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       setTimer(10);
   }
   
+  const handleVoteDecision = (wantsToVote: boolean) => {
+      const playerIndex = gameState.currentPlayerIndex;
+      addCommentary(`${gameState.players[playerIndex].name} decides ${wantsToVote ? 'to vote' : 'to stay'}.`);
+      
+      setGameState(prev => {
+          const newPlayers = [...prev.players];
+          newPlayers[playerIndex].wantsToVote = wantsToVote;
+
+          // Find next player to make a decision
+          let nextPlayerIndex = -1;
+          for (let i = 1; i < newPlayers.length; i++) {
+              const potentialIndex = (playerIndex + i) % newPlayers.length;
+              if (newPlayers[potentialIndex].wantsToVote === undefined) {
+                  nextPlayerIndex = potentialIndex;
+                  break;
+              }
+          }
+
+          if (nextPlayerIndex === -1) {
+              // All players have decided
+              const playersVoting = newPlayers.filter(p => p.wantsToVote);
+              if (playersVoting.length === 0) {
+                  addCommentary(`No one wants to swap. Let the game begin!`);
+                  return {...prev, players: newPlayers, gamePhase: GamePhase.GAMEPLAY, currentPlayerIndex: prev.firstPlayerToAct, roundLeaderIndex: prev.firstPlayerToAct };
+              }
+              
+              const firstVoterIndex = newPlayers.findIndex(p => p.wantsToVote);
+              addCommentary(`Time to vote on the number of cards to swap.`);
+              return {...prev, players: newPlayers, gamePhase: GamePhase.VOTE_SWAP, currentPlayerIndex: firstVoterIndex };
+          }
+
+          return {...prev, players: newPlayers, currentPlayerIndex: nextPlayerIndex};
+      });
+  };
+
   const handleFinalSwapDecision = (participate: boolean) => {
     setTimer(0);
     const playerIndex = gameState.currentPlayerIndex;
@@ -653,7 +781,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         let nextDeciderIndex = -1;
         for (let i = 1; i < newPlayers.length; i++) {
             const idx = (playerIndex + i) % newPlayers.length;
-            if (!newPlayers[idx].hasStoodPat && newPlayers[idx].swapVote !== prev.voteResult && !newPlayers[idx].hasMadeFinalSwapDecision) {
+            if (newPlayers[idx].wantsToVote && newPlayers[idx].swapVote !== prev.voteResult && !newPlayers[idx].hasMadeFinalSwapDecision) {
                 nextDeciderIndex = idx;
                 break;
             }
@@ -945,10 +1073,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     const winningPlays = Object.values(handByRank).filter(group => 
         group.length >= leadHand.length && group[0].value >= leadHand[0].value
     );
+    console.log(`[VALIDATION] Found ${winningPlays.length} winning sets:`, winningPlays.map(g => g.map(c => c.rank)));
 
     // Determine if a "beat and sacrifice" play is possible
     const higherCards = player.hand.filter(c => c.value > leadHand[0].value);
     const canBeatAndSacrifice = higherCards.length > 0;
+    console.log(`[VALIDATION] Can 'beat and sacrifice'? ${canBeatAndSacrifice}`);
 
     // A player MUST beat the hand if they are able to.
     if (winningPlays.length > 0 || canBeatAndSacrifice) {
@@ -956,20 +1086,29 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
 
         // Check if the played hand is a valid winning set
         const isWinningSetPlay = cards[0].value >= leadHand[0].value && cards.every(c => c.rank === cards[0].rank);
+        console.log(`[VALIDATION] Is the play a valid winning set? ${isWinningSetPlay}`);
         if (isWinningSetPlay) {
             console.log("[VALIDATION] PASSED: Player made a valid winning set play.");
             return true;
         }
 
         // Check if the played hand is a valid "beat and sacrifice"
-        if (canBeatAndSacrifice) {
-            const highestBeatingCard = higherCards.sort((a,b) => b.value - a.value)[0];
-            const restOfHand = player.hand.filter(c => c.rank !== highestBeatingCard.rank || c.suit !== highestBeatingCard.suit);
+        const playedHigherCards = cards.filter(c => c.value > leadHand[0].value);
+
+        if (canBeatAndSacrifice && playedHigherCards.length === 1) {
+            const beatingCard = playedHigherCards[0];
+            // Hand without the single beating card
+            const restOfHand = player.hand.filter(c => c.rank !== beatingCard.rank || c.suit !== beatingCard.suit);
             const lowestCardsForSacrifice = restOfHand.sort((a,b) => a.value - b.value).slice(0, leadHand.length - 1);
-            const expectedPlay = [highestBeatingCard, ...lowestCardsForSacrifice].sort((a, b) => a.value - b.value);
-            const playedCardsSorted = [...cards].sort((a, b) => a.value - b.value);
             
-            if (JSON.stringify(expectedPlay) === JSON.stringify(playedCardsSorted)) {
+            // Played cards without the single beating card
+            const playedSacrificeCards = cards.filter(c => c.rank !== beatingCard.rank || c.suit !== beatingCard.suit);
+
+            // Check if the sacrificed cards are indeed the lowest ones
+            const playedSacrificeSorted = playedSacrificeCards.sort((a,b) => a.value - b.value);
+            const lowestCardsSorted = lowestCardsForSacrifice.sort((a,b) => a.value - b.value);
+            
+            if (JSON.stringify(playedSacrificeSorted) === JSON.stringify(lowestCardsSorted)) {
                 console.log("[VALIDATION] PASSED: Player made a valid 'beat and sacrifice' play.");
                 return true;
             }
@@ -1022,10 +1161,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     let beatAndSacrificePlay: Card[] | null = null;
     const higherCards = hand.filter(c => c.value > leadValue);
     if (higherCards.length > 0) {
-        const highestBeatingCard = higherCards.sort((a,b) => b.value - a.value)[0];
-        const restOfHand = hand.filter(c => c.rank !== highestBeatingCard.rank || c.suit !== highestBeatingCard.suit);
+        const lowestBeatingCard = higherCards.sort((a,b) => a.value - b.value)[0];
+        const restOfHand = hand.filter(c => c.rank !== lowestBeatingCard.rank || c.suit !== lowestBeatingCard.suit);
         const lowestCards = restOfHand.sort((a,b) => a.value - b.value).slice(0, leadCount - 1);
-        beatAndSacrificePlay = [highestBeatingCard, ...lowestCards];
+        beatAndSacrificePlay = [lowestBeatingCard, ...lowestCards];
     }
     
     // Bot Strategy:
@@ -1370,42 +1509,62 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         if (!humanPlayer) return prev;
         const leadHand = gameState.lastPlayedHand;
 
-        // Check if player is able to beat the lead hand.
-        let canBeatLead = false;
-        const handByRank: {[key: string]: Card[]} = {};
-        if (leadHand.length > 0) {
-            humanPlayer.hand.forEach(handCard => {
-                if (!handByRank[handCard.rank]) handByRank[handCard.rank] = [];
-                handByRank[handCard.rank].push(handCard);
+        if (leadHand.length > 0) { // Player is following
+            const handByRank: {[key: string]: Card[]} = {};
+            humanPlayer.hand.forEach(c => {
+                if (!handByRank[c.rank]) handByRank[c.rank] = [];
+                handByRank[c.rank].push(c);
             });
-            canBeatLead = Object.values(handByRank).some(sameRankCards => 
-                sameRankCards.length >= leadHand.length && sameRankCards[0].value >= leadHand[0].value
+            const canBeatWithSet = Object.values(handByRank).some(
+                group => group.length >= leadHand.length && group[0].value >= leadHand[0].value
             );
-        }
+            const higherCards = humanPlayer.hand.filter(c => c.value > leadHand[0].value);
+            const canBeatAndSacrifice = !canBeatWithSet && higherCards.length > 0;
 
-        // Rule: a play must consist of cards of the same rank, UNLESS you are sacrificing.
-        // If you can beat the lead, you must play cards of the same rank. If you are leading, you must also play cards of same rank.
-        if ((canBeatLead || leadHand.length === 0) && prev.length > 0 && prev[0].rank !== card.rank) {
-          console.log(`[DEBUG] New rank selected, clearing previous selection.`);
-          return [card]; // Start new selection with the new rank
-        }
-        
-        if (leadHand.length > 0) {
-            if (canBeatLead) {
-              const cardsOfSameRank = handByRank[card.rank] || [];
-              if (cardsOfSameRank.length < leadHand.length || card.value < leadHand[0].value) {
-                console.log(`[DEBUG] Invalid play: Cannot select card that doesn't beat lead.`);
-                return prev;
-              }
-            } else { // Cannot beat lead, must sacrifice
-              const sortedHand = [...humanPlayer.hand].sort((a,b) => a.value - b.value);
-              const lowestCards = sortedHand.slice(0, leadHand.length);
-              const isLowestCard = lowestCards.some(lowest => lowest.rank === card.rank && lowest.suit === card.suit);
-              
-              if (!isLowestCard) {
-                console.log(`[DEBUG] Invalid play: Must select one of the lowest cards.`);
-                return prev;
-              }
+            if (canBeatWithSet) {
+                const cardsOfClickedRank = handByRank[card.rank] || [];
+                if (cardsOfClickedRank.length < leadHand.length || card.value < leadHand[0].value) {
+                    addCommentary(`You must play a set of ${leadHand.length} that can beat the ${leadHand[0].rank}s.`);
+                    return prev;
+                }
+                if (prev.length > 0 && prev[0].rank !== card.rank) {
+                    return [card];
+                }
+            } else if (canBeatAndSacrifice) {
+                const sortedHand = [...humanPlayer.hand].sort((a,b) => a.value - b.value);
+                const lowestCards = sortedHand.slice(0, leadHand.length - 1);
+
+                const newSelection = [...prev, card];
+                const higherInSelection = newSelection.filter(c => higherCards.some(h => h.rank === c.rank && h.suit === c.suit));
+                const lowestInSelection = newSelection.filter(c => lowestCards.some(l => l.rank === c.rank && l.suit === c.suit));
+                
+                // 1. Can't select more than one beating card.
+                if (higherInSelection.length > 1) {
+                    addCommentary(`You can only use one high card to beat the hand.`);
+                    return prev;
+                }
+                // 2. Can't select cards that aren't part of the lowest set (unless it's the one beating card)
+                if ((higherInSelection.length + lowestInSelection.length) !== newSelection.length) {
+                    addCommentary(`To beat and sacrifice, you must use one high card and your lowest card(s).`);
+                    return prev;
+                }
+                // 3. Don't allow selecting more cards than necessary.
+                if (newSelection.length > leadHand.length) {
+                    return prev; 
+                }
+            } else {
+                // Must sacrifice lowest cards.
+                const sortedHand = [...humanPlayer.hand].sort((a, b) => a.value - b.value);
+                const lowestCards = sortedHand.slice(0, leadHand.length);
+                const isLowest = lowestCards.some(c => c.rank === card.rank && c.suit === card.suit);
+                if (!isLowest) {
+                    addCommentary(`You can't beat the hand, you must sacrifice your lowest cards.`);
+                    return prev;
+                }
+            }
+        } else { // Player is leading
+            if (prev.length > 0 && prev[0].rank !== card.rank) {
+                return [card];
             }
         }
         
@@ -1468,6 +1627,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
           key={player.id}
           player={player}
           isCurrentPlayer={index === gameState.currentPlayerIndex}
+          isStarter={player.id === gameState.starterPlayerId}
           positionClass={playerPositions[index]}
           faceUpCard={player.faceUpCard}
           gamePhase={gameState.gamePhase}
@@ -1567,6 +1727,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         onFinalSwap={handleFinalSwap}
         onPlayCards={handlePlayCards}
         onMinigameSwap={handleMinigameSwap}
+        onVoteDecision={handleVoteDecision}
       />
       {gameState.gamePhase === GamePhase.GAME_OVER && (
           <GameOverModal

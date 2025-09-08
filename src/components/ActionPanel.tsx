@@ -14,13 +14,14 @@ interface ActionPanelProps {
   onFinalSwap: (cards: Card[]) => void;
   onPlayCards: () => void;
   onMinigameSwap: (wantsToSwap: boolean) => void;
+  onVoteDecision: (wantsToVote: boolean) => void;
 }
 
 const ActionButton: React.FC<{onClick: () => void, disabled?: boolean, children: React.ReactNode, color?: string}> = ({ onClick, disabled, children, color = 'bg-cyan-600 hover:bg-cyan-500' }) => (
     <button
         onClick={onClick}
         disabled={disabled}
-        className={`px-6 py-3 font-bold text-white rounded-lg shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${color} transform disabled:scale-100 hover:scale-105`}
+        className={`px-4 py-2 text-sm md:px-6 md:py-3 font-bold text-white rounded-lg shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${color} transform disabled:scale-100 hover:scale-105`}
     >
         {children}
     </button>
@@ -28,22 +29,33 @@ const ActionButton: React.FC<{onClick: () => void, disabled?: boolean, children:
 
 
 const ActionPanel: React.FC<ActionPanelProps> = (props) => {
-    const { gameState, selectedCards, timer, onSwapDecision, onConfirmSwap, onOtherPlayerSwap, onVote, onFinalSwapDecision, onFinalSwap, onPlayCards, onMinigameSwap } = props;
+    const { gameState, selectedCards, timer, onSwapDecision, onConfirmSwap, onOtherPlayerSwap, onVote, onFinalSwapDecision, onFinalSwap, onPlayCards, onMinigameSwap, onVoteDecision } = props;
     const humanPlayer = gameState.players.find(p => p.isHuman);
     const isHumanTurn = gameState.players[gameState.currentPlayerIndex]?.isHuman;
     
     const renderContent = () => {
         if (!humanPlayer) return null;
 
+        if (!isHumanTurn) {
+            const swapAndVotePhases = [
+                GamePhase.FIRST_SWAP_DECISION, GamePhase.FIRST_SWAP_OTHERS_DECISION,
+                GamePhase.OTHERS_SWAP_DECISION, GamePhase.VOTE_SWAP_DECISION,
+                GamePhase.VOTE_SWAP, GamePhase.FINAL_SWAP_DECISION
+            ];
+            if (swapAndVotePhases.includes(gameState.gamePhase)) {
+                 return <p className="text-lg mb-2">Waiting for other players...</p>;
+            }
+        }
+
         switch(gameState.gamePhase) {
             case GamePhase.FIRST_SWAP_DECISION:
                 if (isHumanTurn) {
                     return (
                         <>
-                            <p className="text-lg mb-2">Do you want to swap cards or start the game?</p>
+                            <p className="text-lg mb-2">Do you want to swap cards or stand pat?</p>
                             <div className="flex space-x-4">
                                 <ActionButton onClick={() => onSwapDecision(true)}>Swap Cards</ActionButton>
-                                <ActionButton onClick={() => onSwapDecision(false)} color="bg-green-600 hover:bg-green-500">Start Game</ActionButton>
+                                <ActionButton onClick={() => onSwapDecision(false)} color="bg-gray-600 hover:bg-gray-500">Stand Pat</ActionButton>
                             </div>
                         </>
                     );
@@ -62,7 +74,7 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                 }
                 break;
             case GamePhase.OTHERS_SWAP_DECISION:
-                 if (isHumanTurn) {
+                 if (isHumanTurn && !humanPlayer.hasStoodPat) {
                      return (
                         <>
                             <p className="text-lg mb-2">{gameState.players[gameState.firstPlayerToAct].name} swapped {gameState.swapAmount} cards. Do you want to do the same?</p>
@@ -86,20 +98,33 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                     );
                 }
                 break;
+            case GamePhase.VOTE_SWAP_DECISION:
+                if (isHumanTurn && !humanPlayer.hasStoodPat && humanPlayer.wantsToVote === undefined) {
+                    return (
+                        <>
+                            <p className="text-lg mb-2">The final swap is about to happen. Do you want to participate in the vote?</p>
+                            <div className="flex space-x-4">
+                                <ActionButton onClick={() => onVoteDecision(true)}>Vote to Swap</ActionButton>
+                                <ActionButton onClick={() => onVoteDecision(false)} color="bg-gray-600 hover:bg-gray-500">Stay</ActionButton>
+                            </div>
+                        </>
+                    );
+                }
+                break;
             case GamePhase.VOTE_SWAP:
-                if (isHumanTurn && !humanPlayer.hasVoted) {
+                if (isHumanTurn && !humanPlayer.hasVoted && humanPlayer.wantsToVote) {
                     return (
                         <>
                             <p className="text-lg mb-2">Vote for how many cards to swap:</p>
                             <div className="flex space-x-2">
-                                {[1,2,3,4,5].map(n => <ActionButton key={n} onClick={() => onVote(n)}>{n}</ActionButton>)}
+                                {[1, 2, 3, 4, 5].map(n => <ActionButton key={n} onClick={() => onVote(n)}>{n}</ActionButton>)}
                             </div>
                         </>
                     )
                 }
                 break;
             case GamePhase.FINAL_SWAP_DECISION:
-                if (isHumanTurn && !humanPlayer.hasMadeFinalSwapDecision) {
+                if (isHumanTurn && !humanPlayer.hasMadeFinalSwapDecision && !humanPlayer.hasStoodPat) {
                     return (
                         <>
                             <p className="text-lg mb-2">The vote is to swap {gameState.voteResult}. Do you want to participate?</p>

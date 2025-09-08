@@ -41,6 +41,8 @@ export interface Player {
   swapVote?: number;
   hasVoted?: boolean;
   hasMadeFinalSwapDecision?: boolean;
+  wantsToVote?: boolean;
+  hasMadeFirstSwapDecision?: boolean;
   score: number;
 }
 
@@ -54,8 +56,10 @@ export enum GamePhase {
   DEALING = 'DEALING',
   FIRST_SWAP_DECISION = 'FIRST_SWAP_DECISION',
   FIRST_SWAP_ACTION = 'FIRST_SWAP_ACTION',
+  FIRST_SWAP_OTHERS_DECISION = 'FIRST_SWAP_OTHERS_DECISION',
   OTHERS_SWAP_DECISION = 'OTHERS_SWAP_DECISION',
   OTHERS_SWAP_ACTION = 'OTHERS_SWAP_ACTION', // New phase for human players to select cards
+  VOTE_SWAP_DECISION = 'VOTE_SWAP_DECISION',
   VOTE_SWAP = 'VOTE_SWAP',
   VOTE_RESULT = 'VOTE_RESULT',
   FINAL_SWAP_DECISION = 'FINAL_SWAP_DECISION',
@@ -74,6 +78,7 @@ export interface GameState {
   deck: Card[];
   gamePhase: GamePhase;
   currentPlayerIndex: number;
+  starterPlayerId?: string;
   commentary: string[];
   roundLeaderIndex: number;
   cardsOnTable: Card[];
