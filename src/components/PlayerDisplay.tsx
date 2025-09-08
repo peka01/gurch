@@ -7,13 +7,14 @@ interface PlayerDisplayProps {
   player: Player;
   isCurrentPlayer: boolean;
   isStarter: boolean;
+  isThinking: boolean;
   positionClass: string;
   faceUpCard?: Card;
   gamePhase: GamePhase;
   swappingCards?: Card[];
 }
 
-const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, isStarter, positionClass, faceUpCard, gamePhase, swappingCards }) => {
+const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, isStarter, isThinking, positionClass, faceUpCard, gamePhase, swappingCards }) => {
   const isBottomPlayer = positionClass.includes('bottom');
   
   const ringClass = isCurrentPlayer 
@@ -29,6 +30,11 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, 
           <img src={player.avatar} alt={player.name} className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-yellow-400 object-cover" />
           {player.isDealer && (
             <div className="absolute -top-2 -right-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full shadow-md">DEALER</div>
+          )}
+          {isThinking && (
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white text-black text-xs font-bold px-3 py-1 rounded-full shadow-md animate-pulse">
+              Thinking...
+            </div>
           )}
         </div>
         <p className="mt-2 text-sm md:text-base font-semibold">{player.name}</p>

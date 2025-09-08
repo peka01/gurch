@@ -51,6 +51,12 @@ export interface TrickPlay {
   cards: Card[];
 }
 
+export interface SwappingCards {
+    playerId: string;
+    cards: Card[];
+    originalPhase: GamePhase;
+}
+
 export enum GamePhase {
   LOBBY = 'LOBBY',
   DEALING = 'DEALING',
@@ -79,6 +85,7 @@ export interface GameState {
   gamePhase: GamePhase;
   currentPlayerIndex: number;
   starterPlayerId?: string;
+  thinkingPlayerId?: string;
   commentary: string[];
   roundLeaderIndex: number;
   cardsOnTable: Card[];
