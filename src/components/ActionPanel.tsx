@@ -148,6 +148,16 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                         console.log(`[DEBUG] ActionPanel: swapAmount = ${gameState.swapAmount}, firstPlayer = ${playerName}`);
                     }
                     
+                    // Don't show the swap decision if swapAmount is 0 (no one wants to swap)
+                    if (gameState.swapAmount === 0) {
+                        return (
+                            <>
+                                <p className="text-lg mb-2">No one wants to swap cards.</p>
+                                <p className="text-base mb-4">The game will proceed to voting.</p>
+                            </>
+                        );
+                    }
+                    
                     return (
                         <>
                             <p className="text-lg mb-2">{playerName} chose to swap {gameState.swapAmount} cards.</p>
