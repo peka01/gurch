@@ -1624,40 +1624,48 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
 
   const getPlayerPositions = () => {
     const positions = [
-      'top-4 left-1/2 -translate-x-1/2', // Top
-      'top-1/2 -translate-y-1/2 right-4', // Right
-      'bottom-32 left-1/2 -translate-x-1/2', // Bottom (Human)
-      'top-1/2 -translate-y-1/2 left-4' // Left
+      { class: 'top-4', style: { left: '50%', transform: 'translateX(-50%)' } }, // Top
+      { class: 'right-4', style: { top: '50%', right: '20px', transform: 'translateY(-50%)' } }, // Right - fixed positioning
+      { class: 'bottom-32', style: { left: '50%', transform: 'translateX(-50%)' } }, // Bottom (Human) - use inline CSS
+      { class: 'left-4', style: { top: '50%', left: '20px', transform: 'translateY(-50%)' } } // Left - fixed positioning
     ];
     const humanIndex = gameState.players.findIndex(p => p.isHuman);
     if (humanIndex === -1) return positions.slice(0, gameState.players.length);
 
     const reorderedPositions = [];
-    for(let i=0; i < gameState.players.length; i++) {
-        const playerIndex = (humanIndex + i) % gameState.players.length;
-        if (playerIndex === humanIndex) {
-            reorderedPositions[playerIndex] = positions[2];
-        } else if (i === 1) { // Player to the left of human
-            reorderedPositions[playerIndex] = positions[3];
-        } else if (i === 2) { // Player across from human
-            reorderedPositions[playerIndex] = positions[0];
-        } else { // Player to the right of human
-            reorderedPositions[playerIndex] = positions[1];
+    
+    if (gameState.players.length === 3) {
+        // 3-player case: Human at bottom, other players at left and right
+        for(let i=0; i < gameState.players.length; i++) {
+            const playerIndex = (humanIndex + i) % gameState.players.length;
+            if (playerIndex === humanIndex) {
+                reorderedPositions[playerIndex] = positions[2]; // Bottom (Human)
+            } else if (i === 1) { // Player to the right of human
+                reorderedPositions[playerIndex] = positions[1]; // Right
+            } else if (i === 2) { // Player to the left of human
+                reorderedPositions[playerIndex] = positions[3]; // Left
+            }
         }
-    }
-     if (gameState.players.length === 3) {
-        let p1, p2, p3;
-        p1 = gameState.players[(humanIndex + 0) % 3];
-        p2 = gameState.players[(humanIndex + 1) % 3];
-        p3 = gameState.players[(humanIndex + 2) % 3];
-        reorderedPositions[gameState.players.indexOf(p1)] = positions[2];
-        reorderedPositions[gameState.players.indexOf(p2)] = positions[1];
-        reorderedPositions[gameState.players.indexOf(p3)] = positions[3];
+    } else {
+        // 4-player case: Human at bottom, others at top, left, right
+        for(let i=0; i < gameState.players.length; i++) {
+            const playerIndex = (humanIndex + i) % gameState.players.length;
+            if (playerIndex === humanIndex) {
+                reorderedPositions[playerIndex] = positions[2]; // Bottom (Human)
+            } else if (i === 1) { // Player to the left of human
+                reorderedPositions[playerIndex] = positions[3]; // Left
+            } else if (i === 2) { // Player across from human
+                reorderedPositions[playerIndex] = positions[0]; // Top
+            } else { // Player to the right of human
+                reorderedPositions[playerIndex] = positions[1]; // Right
+            }
+        }
     }
     return reorderedPositions;
   }
   
   const playerPositions = getPlayerPositions();
+  
 
   // Helper function to get phase display name
   const getPhaseDisplayName = (phase: GamePhase): string => {
@@ -1853,23 +1861,25 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       </div>
 
       {gameState.players.map((player, index) => (
-        <PlayerDisplay
-          key={player.id}
-          player={player}
-          isCurrentPlayer={index === gameState.currentPlayerIndex}
-          isStarter={player.id === gameState.starterPlayerId}
-          isThinking={player.id === gameState.thinkingPlayerId}
-          positionClass={playerPositions[index]}
-          faceUpCard={player.faceUpCard}
-          gamePhase={gameState.gamePhase}
-          swappingCards={swappingCards?.playerId === player.id ? swappingCards.cards : undefined}
-        />
+        !player.isHuman && (
+          <PlayerDisplay
+            key={player.id}
+            player={player}
+            isCurrentPlayer={index === gameState.currentPlayerIndex}
+            isStarter={player.id === gameState.starterPlayerId}
+            isThinking={player.id === gameState.thinkingPlayerId}
+            positionClass={playerPositions[index].class}
+            positionStyle={playerPositions[index].style}
+            faceUpCard={player.faceUpCard}
+            gamePhase={gameState.gamePhase}
+            swappingCards={swappingCards?.playerId === player.id ? swappingCards.cards : undefined}
+          />
+        )
       ))}
       
-      {/* Human Player's Hand with Card Analysis */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-4xl">
-        
-        {/* Player's Hand */}
+
+      {/* Human Player's Hand - Horizontally centered in lower part of screen */}
+      <div className="absolute bottom-8" style={{left: '50%', transform: 'translateX(-50%)'}}>
         <div className="flex justify-center items-center space-x-2">
           {gameState.players.find(p=>p.isHuman)?.hand.sort((a,b) => a.value - b.value).map((card, index) => (
             <CardComponent 

@@ -9,12 +9,13 @@ interface PlayerDisplayProps {
   isStarter: boolean;
   isThinking: boolean;
   positionClass: string;
+  positionStyle?: React.CSSProperties;
   faceUpCard?: Card;
   gamePhase: GamePhase;
   swappingCards?: Card[];
 }
 
-const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, isStarter, isThinking, positionClass, faceUpCard, gamePhase, swappingCards }) => {
+const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, isStarter, isThinking, positionClass, positionStyle, faceUpCard, gamePhase, swappingCards }) => {
   const isBottomPlayer = positionClass.includes('bottom');
   
   const ringClass = isCurrentPlayer 
@@ -47,7 +48,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, 
   const status = getPlayerStatus();
 
   return (
-    <div className={`absolute transform ${positionClass} transition-all duration-500 z-10`}>
+    <div className={`absolute transform transition-all duration-500 z-10`} style={positionStyle}>
       <div className={`flex flex-col items-center p-2 rounded-lg bg-black/40 ${ringClass}`}>
         <div className="relative">
           <img src={player.avatar} alt={player.name} className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-yellow-400 object-cover" />

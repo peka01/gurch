@@ -70,9 +70,9 @@ const ActionButton: React.FC<ActionButtonProps> = ({
     };
 
     return (
-        <button
+    <button
             onClick={handleClick}
-            disabled={disabled}
+        disabled={disabled}
             className={`
                 ${getSizeClasses()} 
                 font-bold text-white rounded-lg shadow-md transition-all duration-200 
@@ -83,10 +83,10 @@ const ActionButton: React.FC<ActionButtonProps> = ({
                 focus:outline-none focus:ring-4 focus:ring-white/30
             `}
             title={requiresConfirmation ? "Requires confirmation" : undefined}
-        >
-            {children}
-        </button>
-    );
+    >
+        {children}
+    </button>
+);
 };
 
 
@@ -313,7 +313,7 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
     if (!content) return null;
 
     return (
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/60 p-6 rounded-xl shadow-lg z-40 flex flex-col items-center max-w-md">
+        <div className="absolute bg-black/60 p-6 rounded-xl shadow-lg z-40 flex flex-col items-center max-w-md" style={{top: '50%', left: '50%', transform: 'translate(-50%, -50%)'}}>
              {timer > 0 && <div className="absolute -top-4 -right-4 w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-xl font-bold border-2 border-white">{timer}</div>}
              {content}
         </div>
