@@ -253,20 +253,22 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                 }
                 break;
             case GamePhase.FINAL_SWAP_DECISION:
-                if (isHumanTurn && !humanPlayer.hasMadeFinalSwapDecision && !humanPlayer.hasStoodPat) {
+                console.log(`[DEBUG] ActionPanel FINAL_SWAP_DECISION: isHumanTurn=${isHumanTurn}, hasMadeFinalSwapDecision=${humanPlayer.hasMadeFinalSwapDecision}, hasStoodPat=${humanPlayer.hasStoodPat}`);
+                if (isHumanTurn && !humanPlayer.hasMadeFinalSwapDecision) {
                     return (
                         <>
-                            <p className="text-lg mb-2">The vote is to swap {gameState.voteResult}. Do you want to participate?</p>
+                            <p className="text-lg mb-2">The vote is to swap {gameState.voteResult} cards. Do you want to participate?</p>
                              <div className="flex space-x-4">
-                                <ActionButton onClick={() => onFinalSwapDecision(true)}>Yes, swap {gameState.voteResult}</ActionButton>
-                                <ActionButton onClick={() => onFinalSwapDecision(false)} color="bg-gray-600 hover:bg-gray-500">No</ActionButton>
+                                <ActionButton onClick={() => onFinalSwapDecision(true)}>Yes, swap {gameState.voteResult} cards</ActionButton>
+                                <ActionButton onClick={() => onFinalSwapDecision(false)} color="bg-gray-600 hover:bg-gray-500">No, I'll pass</ActionButton>
                             </div>
                         </>
                     )
                 }
                 break;
             case GamePhase.FINAL_SWAP_ACTION:
-                if (!humanPlayer.hasStoodPat) {
+                console.log(`[DEBUG] ActionPanel FINAL_SWAP_ACTION: isHumanTurn=${isHumanTurn}, hasStoodPat=${humanPlayer.hasStoodPat}, hasMadeFinalSwapDecision=${humanPlayer.hasMadeFinalSwapDecision}, voteResult=${gameState.voteResult}`);
+                if (isHumanTurn && !humanPlayer.hasStoodPat && humanPlayer.hasMadeFinalSwapDecision) {
                      return (
                         <>
                             <p className="text-lg mb-2">Select {gameState.voteResult} cards for the final swap.</p>
@@ -275,6 +277,8 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                             </ActionButton>
                         </>
                     );
+                } else if (isHumanTurn && humanPlayer.hasStoodPat) {
+                    return <p className="text-lg mb-2">You've decided not to participate in the final swap. Waiting for other players...</p>;
                 }
                  break;
             case GamePhase.FINAL_SWAP_ONE_CARD_SELECT:
@@ -313,7 +317,7 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
     if (!content) return null;
 
     return (
-        <div className="absolute bg-black/60 p-6 rounded-xl shadow-lg z-40 flex flex-col items-center max-w-md" style={{top: '50%', left: '50%', transform: 'translate(-50%, -50%)'}}>
+        <div className="absolute bg-black/60 p-6 rounded-xl shadow-lg z-50 flex flex-col items-center max-w-md" style={{top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 'auto', minWidth: '300px'}}>
              {timer > 0 && <div className="absolute -top-4 -right-4 w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-xl font-bold border-2 border-white">{timer}</div>}
              {content}
         </div>
