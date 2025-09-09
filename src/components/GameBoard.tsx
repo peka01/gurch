@@ -74,6 +74,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
   const [showGameplayStart, setShowGameplayStart] = useState<boolean>(false);
   const hasDealt = React.useRef(false);
   const processedDecisions = useRef<Set<string>>(new Set());
+  
+  // Fallback system to prevent stalls
+  const [phaseStartTime, setPhaseStartTime] = useState<number>(Date.now());
+  const [stallCount, setStallCount] = useState<number>(0);
+  const maxStallTime = 30000; // 30 seconds max per phase
+  const maxStallCount = 3; // Max 3 stalls before emergency fallback
 
   // Utility function to enforce 5-card limit
   const enforceFiveCardLimit = (players: Player[]): Player[] => {
@@ -100,6 +106,44 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         return {...prev, currentPlayerIndex: nextIndex};
     });
   }, []);
+
+  // Emergency fallback system to prevent infinite stalls
+  const emergencyFallback = useCallback((reason: string) => {
+    console.warn(`[EMERGENCY FALLBACK] ${reason}`);
+    addCommentary(`Game auto-advanced due to: ${reason}`);
+    
+    setGameState(prev => {
+      const newPlayers = [...prev.players];
+      
+      // Force all players to make decisions if they haven't
+      newPlayers.forEach(player => {
+        if (!player.hasMadeFirstSwapDecision) {
+          player.hasMadeFirstSwapDecision = true;
+          player.hasStoodPat = true;
+        }
+        if (player.wantsToVote === undefined) {
+          player.wantsToVote = false;
+        }
+        if (player.hasMadeFinalSwapDecision === undefined) {
+          player.hasMadeFinalSwapDecision = true;
+          player.hasStoodPat = true;
+        }
+      });
+      
+      // Force transition to gameplay
+      return {
+        ...prev,
+        players: newPlayers,
+        gamePhase: GamePhase.GAMEPLAY,
+        currentPlayerIndex: 0,
+        swapAmount: 0,
+        voteResult: 0
+      };
+    });
+    
+    setStallCount(0);
+    setPhaseStartTime(Date.now());
+  }, [addCommentary]);
 
   // Centralized phase transition manager with validation
   const transitionToPhase = useCallback((newPhase: GamePhase, options: {
@@ -240,6 +284,75 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     });
   }, [addCommentary]);
 
+  // Stall detection and timeout mechanism
+  useEffect(() => {
+    const checkForStall = () => {
+      const timeInPhase = Date.now() - phaseStartTime;
+      const isStalled = timeInPhase > maxStallTime;
+      
+      if (isStalled) {
+        console.warn(`[STALL DETECTED] Phase ${gameState.gamePhase} has been running for ${timeInPhase}ms`);
+        setStallCount(prev => prev + 1);
+        
+        if (stallCount >= maxStallCount) {
+          emergencyFallback(`Phase ${gameState.gamePhase} stalled for too long`);
+          return;
+        }
+        
+        // Try to auto-advance the current phase
+        autoAdvancePhase();
+      }
+    };
+    
+    const stallCheckInterval = setInterval(checkForStall, 5000); // Check every 5 seconds
+    return () => clearInterval(stallCheckInterval);
+  }, [gameState.gamePhase, phaseStartTime, stallCount, maxStallTime, maxStallCount, emergencyFallback]);
+
+  // Auto-advance mechanism for stuck phases
+  const autoAdvancePhase = useCallback(() => {
+    console.log(`[AUTO-ADVANCE] Attempting to advance from phase ${gameState.gamePhase}`);
+    
+    setGameState(prev => {
+      const newPlayers = [...prev.players];
+      const currentPlayer = newPlayers[prev.currentPlayerIndex];
+      
+      // Force current player to make a decision
+      switch (prev.gamePhase) {
+        case GamePhase.FIRST_SWAP_DECISION:
+        case GamePhase.FIRST_SWAP_OTHERS_DECISION:
+          if (!currentPlayer.hasMadeFirstSwapDecision) {
+            currentPlayer.hasMadeFirstSwapDecision = true;
+            currentPlayer.hasStoodPat = true;
+            addCommentary(`${currentPlayer.name} auto-decided to stand pat.`);
+          }
+          break;
+        case GamePhase.VOTE_SWAP_DECISION:
+          if (currentPlayer.wantsToVote === undefined) {
+            currentPlayer.wantsToVote = false;
+            addCommentary(`${currentPlayer.name} auto-decided not to vote.`);
+          }
+          break;
+        case GamePhase.FINAL_SWAP_DECISION:
+          if (currentPlayer.hasMadeFinalSwapDecision === undefined) {
+            currentPlayer.hasMadeFinalSwapDecision = true;
+            currentPlayer.hasStoodPat = true;
+            addCommentary(`${currentPlayer.name} auto-decided to stand pat.`);
+          }
+          break;
+      }
+      
+      return { ...prev, players: newPlayers };
+    });
+    
+    setPhaseStartTime(Date.now());
+  }, [gameState.gamePhase, addCommentary]);
+
+  // Reset phase start time when phase changes
+  useEffect(() => {
+    setPhaseStartTime(Date.now());
+    setStallCount(0);
+  }, [gameState.gamePhase]);
+
   // Main Game Loop using useEffect
   useEffect(() => {
     // FIX: Use ReturnType<typeof setTimeout> for browser compatibility instead of NodeJS.Timeout
@@ -264,10 +377,26 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                 // Find next player who hasn't made a decision
                 const nextPlayerIndex = findNextPlayerForDecision(gameState.players, gameState.currentPlayerIndex, 'firstSwap');
                 if (nextPlayerIndex !== -1) {
-                    setGameState(prev => ({...prev, currentPlayerIndex: nextPlayerIndex}));
+                setGameState(prev => ({...prev, currentPlayerIndex: nextPlayerIndex}));
+                } else {
+                    // All players have made their decision, move to vote phase
+                    console.log(`[DEBUG] All players have made first swap decision, moving to vote phase`);
+                    const firstVoterIndex = gameState.players.findIndex(p => !p.hasStoodPat);
+                    setGameState(prev => ({
+                        ...prev, 
+                        gamePhase: GamePhase.VOTE_SWAP_DECISION, 
+                        currentPlayerIndex: firstVoterIndex !== -1 ? firstVoterIndex : 0
+                    }));
                 }
             } else if (!currentPlayer.isHuman && !currentPlayer.hasMadeFirstSwapDecision) {
                 setGameState(prev => ({...prev, thinkingPlayerId: currentPlayer.id }));
+            } else if (currentPlayer.isHuman && !currentPlayer.hasMadeFirstSwapDecision) {
+                // Human player needs to make a decision - wait for their input
+                // But add a timeout fallback
+                timeoutId = setTimeout(() => {
+                    console.log(`[TIMEOUT] Human player ${currentPlayer.name} taking too long, auto-advancing`);
+                    handleSwapDecision(false);
+                }, 10000); // 10 second timeout for human decisions
             }
             return;
         case GamePhase.FIRST_SWAP_ACTION:
@@ -292,7 +421,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                 setGameState(prev => ({...prev, thinkingPlayerId: currentPlayer.id }));
             } else if (currentPlayer.isHuman && currentPlayer.wantsToVote === undefined) {
                 // Human player needs to make a vote decision - wait for their input
-                return;
+                // But add a timeout fallback
+                timeoutId = setTimeout(() => {
+                    console.log(`[TIMEOUT] Human player ${currentPlayer.name} taking too long to vote, auto-advancing`);
+                    handleVoteDecision(false);
+                }, 10000); // 10 second timeout for human decisions
             }
             return;
         case GamePhase.VOTE_SWAP:
@@ -306,6 +439,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         case GamePhase.FINAL_SWAP_DECISION:
             if (!currentPlayer.isHuman) {
                 setGameState(prev => ({...prev, thinkingPlayerId: currentPlayer.id }));
+            } else if (currentPlayer.isHuman && currentPlayer.hasMadeFinalSwapDecision === undefined) {
+                // Human player needs to make a final swap decision - wait for their input
+                // But add a timeout fallback
+                timeoutId = setTimeout(() => {
+                    console.log(`[TIMEOUT] Human player ${currentPlayer.name} taking too long for final swap decision, auto-advancing`);
+                    handleFinalSwapDecision(false);
+                }, 10000); // 10 second timeout for human decisions
             }
             return; // Exit early to prevent further processing
         case GamePhase.FINAL_SWAP_ACTION:
@@ -320,10 +460,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             
             if (!currentPlayer.isHuman) {
                 const botPlayer = currentPlayer;
-                // Bot needs to swap cards
-                const hand = [...botPlayer.hand].sort((a,b) => b.value - a.value);
-                const cardsToSwap = hand.slice(0, gameState.voteResult);
-                timeoutId = setTimeout(() => handleFinalSwap(cardsToSwap), 2000);
+                    // Bot needs to swap cards
+                    const hand = [...botPlayer.hand].sort((a,b) => b.value - a.value);
+                    const cardsToSwap = hand.slice(0, gameState.voteResult);
+                    timeoutId = setTimeout(() => handleFinalSwap(cardsToSwap), 2000);
             }
             // If it's a human's turn, the ActionPanel will handle the UI
             return; // Exit early to prevent further processing
@@ -365,8 +505,35 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     gameLoop();
 
     return () => clearTimeout(timeoutId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState.gamePhase, gameState.currentPlayerIndex]);
+
+  // Global safety net - force gameplay if stuck in pre-gameplay phases for too long
+  useEffect(() => {
+    const preGameplayPhases = [
+      GamePhase.DEALING,
+      GamePhase.FIRST_SWAP_DECISION,
+      GamePhase.FIRST_SWAP_ACTION,
+      GamePhase.FIRST_SWAP_OTHERS_DECISION,
+      GamePhase.OTHERS_SWAP_DECISION,
+      GamePhase.OTHERS_SWAP_ACTION,
+      GamePhase.VOTE_SWAP_DECISION,
+      GamePhase.VOTE_SWAP,
+      GamePhase.FINAL_SWAP_DECISION,
+      GamePhase.FINAL_SWAP_ACTION,
+      GamePhase.FINAL_SWAP_ONE_CARD_SELECT,
+      GamePhase.FINAL_SWAP_ONE_CARD_REVEAL_AND_DECIDE
+    ];
+
+    if (preGameplayPhases.includes(gameState.gamePhase)) {
+      const globalTimeout = setTimeout(() => {
+        console.warn(`[GLOBAL TIMEOUT] Game stuck in ${gameState.gamePhase} for too long, forcing to gameplay`);
+        emergencyFallback(`Global timeout in phase ${gameState.gamePhase}`);
+      }, 60000); // 60 seconds global timeout
+
+      return () => clearTimeout(globalTimeout);
+    }
+  }, [gameState.gamePhase, emergencyFallback]);
 
   useEffect(() => {
     // This effect creates a delay for bot actions to make them feel more natural
@@ -607,6 +774,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         if (!wantsToSwap) {
             newPlayers[playerIndex].hasStoodPat = true;
             addCommentary(`${player.name} stands pat.`);
+            // Set swapAmount to 0 when first player decides not to swap
+            if (prev.swapAmount === undefined) {
+                console.log(`[DEBUG] First player ${player.name} decided not to swap, setting swapAmount to 0`);
+                return {...prev, players: newPlayers, swapAmount: 0};
+            }
         } else {
             addCommentary(`${player.name} wants to swap cards.`);
         }
@@ -772,8 +944,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                   return { ...prev, players: newPlayers, currentPlayerIndex: nextPlayerIndex };
               });
           } else {
-              setSwappingCards({playerId: player.id, cards: cardsToSwap, originalPhase: gameState.gamePhase});
-              addCommentary(`${player.name} is swapping ${cardsToSwap.length} card(s)...`);
+          setSwappingCards({playerId: player.id, cards: cardsToSwap, originalPhase: gameState.gamePhase});
+          addCommentary(`${player.name} is swapping ${cardsToSwap.length} card(s)...`);
           }
       }
   }
@@ -1255,7 +1427,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         
         if (canBeatLead) {
             console.log("[VALIDATION] PASSED: Player made a valid play that beats the lead.");
-            return true;
+                return true;
         }
 
         // If the player could have beaten the hand, but didn't, it's an invalid play.
@@ -1649,8 +1821,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             if (hasWinningCards && !canBeatLead) {
                 // Player has cards that can beat the lead, but current selection doesn't
                 addCommentary(`You must play cards that can beat the ${leadHand[0].rank}s.`);
-                return prev;
-            }
+                    return prev;
+                }
             
             // If player can't beat the lead, they must sacrifice their lowest cards
             if (!hasWinningCards) {
@@ -1691,9 +1863,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     
     if (gameState.players.length === 3) {
         // 3-player case: Human at bottom, other players at left and right
-        for(let i=0; i < gameState.players.length; i++) {
-            const playerIndex = (humanIndex + i) % gameState.players.length;
-            if (playerIndex === humanIndex) {
+    for(let i=0; i < gameState.players.length; i++) {
+        const playerIndex = (humanIndex + i) % gameState.players.length;
+        if (playerIndex === humanIndex) {
                 reorderedPositions[playerIndex] = positions[2]; // Bottom (Human)
             } else if (i === 1) { // Player to the right of human
                 reorderedPositions[playerIndex] = positions[1]; // Right
@@ -1707,11 +1879,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             const playerIndex = (humanIndex + i) % gameState.players.length;
             if (playerIndex === humanIndex) {
                 reorderedPositions[playerIndex] = positions[2]; // Bottom (Human)
-            } else if (i === 1) { // Player to the left of human
+        } else if (i === 1) { // Player to the left of human
                 reorderedPositions[playerIndex] = positions[3]; // Left
-            } else if (i === 2) { // Player across from human
+        } else if (i === 2) { // Player across from human
                 reorderedPositions[playerIndex] = positions[0]; // Top
-            } else { // Player to the right of human
+        } else { // Player to the right of human
                 reorderedPositions[playerIndex] = positions[1]; // Right
             }
         }
@@ -1917,18 +2089,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
 
       {gameState.players.map((player, index) => (
         !player.isHuman && (
-          <PlayerDisplay
-            key={player.id}
-            player={player}
-            isCurrentPlayer={index === gameState.currentPlayerIndex}
-            isStarter={player.id === gameState.starterPlayerId}
-            isThinking={player.id === gameState.thinkingPlayerId}
+        <PlayerDisplay
+          key={player.id}
+          player={player}
+          isCurrentPlayer={index === gameState.currentPlayerIndex}
+          isStarter={player.id === gameState.starterPlayerId}
+          isThinking={player.id === gameState.thinkingPlayerId}
             positionClass={playerPositions[index].class}
             positionStyle={playerPositions[index].style}
-            faceUpCard={player.faceUpCard}
-            gamePhase={gameState.gamePhase}
-            swappingCards={swappingCards?.playerId === player.id ? swappingCards.cards : undefined}
-          />
+          faceUpCard={player.faceUpCard}
+          gamePhase={gameState.gamePhase}
+          swappingCards={swappingCards?.playerId === player.id ? swappingCards.cards : undefined}
+        />
         )
       ))}
       
@@ -1936,21 +2108,21 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       {/* Human Player's Hand - Horizontally centered in lower part of screen */}
       <div className="absolute bottom-8" style={{left: '50%', transform: 'translateX(-50%)'}}>
         <div className="flex justify-center items-center space-x-2">
-          {gameState.players.find(p=>p.isHuman)?.hand.sort((a,b) => a.value - b.value).map((card, index) => (
-            <CardComponent 
-              key={`${card.rank}-${card.suit}-${index}`} 
-              card={card} 
-              isSelected={selectedCards.some(c => c.suit === card.suit && c.rank === card.rank)}
-              onClick={() => onCardClick(card)}
-              isPlayable={
-                (gameState.gamePhase === GamePhase.GAMEPLAY && gameState.players[gameState.currentPlayerIndex].isHuman) ||
-                (gameState.gamePhase === GamePhase.FIRST_SWAP_ACTION && gameState.players[gameState.currentPlayerIndex].isHuman) ||
-                (gameState.gamePhase === GamePhase.OTHERS_SWAP_ACTION && gameState.players[gameState.currentPlayerIndex].isHuman) ||
-                (gameState.gamePhase === GamePhase.FINAL_SWAP_ACTION && gameState.players[gameState.currentPlayerIndex].isHuman) ||
-                (gameState.gamePhase === GamePhase.FINAL_SWAP_ONE_CARD_SELECT && gameState.players[gameState.currentPlayerIndex].isHuman)
-              }
-            />
-          ))}
+        {gameState.players.find(p=>p.isHuman)?.hand.sort((a,b) => a.value - b.value).map((card, index) => (
+          <CardComponent 
+            key={`${card.rank}-${card.suit}-${index}`} 
+            card={card} 
+            isSelected={selectedCards.some(c => c.suit === card.suit && c.rank === card.rank)}
+            onClick={() => onCardClick(card)}
+            isPlayable={
+              (gameState.gamePhase === GamePhase.GAMEPLAY && gameState.players[gameState.currentPlayerIndex].isHuman) ||
+              (gameState.gamePhase === GamePhase.FIRST_SWAP_ACTION && gameState.players[gameState.currentPlayerIndex].isHuman) ||
+              (gameState.gamePhase === GamePhase.OTHERS_SWAP_ACTION && gameState.players[gameState.currentPlayerIndex].isHuman) ||
+              (gameState.gamePhase === GamePhase.FINAL_SWAP_ACTION && gameState.players[gameState.currentPlayerIndex].isHuman) ||
+              (gameState.gamePhase === GamePhase.FINAL_SWAP_ONE_CARD_SELECT && gameState.players[gameState.currentPlayerIndex].isHuman)
+            }
+          />
+        ))}
         </div>
       </div>
 

@@ -154,6 +154,15 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                             <>
                                 <p className="text-lg mb-2">No one wants to swap cards.</p>
                                 <p className="text-base mb-4">The game will proceed to voting.</p>
+                                <div className="flex justify-center">
+                                    <ActionButton 
+                                        onClick={() => onOtherPlayerSwap(false)} 
+                                        variant="primary" 
+                                        size="lg"
+                                    >
+                                        Continue to Voting
+                                    </ActionButton>
+                                </div>
                             </>
                         );
                     }
