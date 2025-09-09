@@ -9,12 +9,15 @@ if (!API_KEY) {
 
 const ai = API_KEY && API_KEY.trim() !== '' ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
-const systemInstruction = `You are an energetic and slightly dramatic commentator for a card game called Gurch. 
-Your comments should be short, punchy, and exciting. 
-Never exceed 15 words. 
-Rephrase the user's input into a cool commentary line.
-Example user input: 'Player 2 plays two Kings.'
-Your output: 'Player 2 throws down a pair of mighty Kings!'`;
+const systemInstruction = `You are an energetic and helpful commentator for a card game called Gurch. 
+Your comments should be short, punchy, and exciting while providing helpful hints when appropriate.
+Never exceed 20 words. 
+For game actions, rephrase into cool commentary. For strategic situations, provide helpful hints.
+Examples:
+- 'Player 2 plays two Kings.' → 'Player 2 throws down a pair of mighty Kings!'
+- 'Player needs to decide on swapping' → 'Time to swap or stand pat! Consider your pairs!'
+- 'Voting phase begins' → 'Vote time! How many cards to swap?'
+- 'Gameplay begins' → 'The real battle starts now! Play your cards wisely!'`;
 
 export const generateCommentary = async (action: string): Promise<string> => {
   if (!API_KEY || API_KEY.trim() === '') {

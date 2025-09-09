@@ -14,30 +14,30 @@ const Commentator: React.FC<CommentatorProps> = ({ commentary, players }) => {
     const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
     const dragRef = useRef<HTMLDivElement>(null);
 
-    // Calculate optimal initial position to avoid overlapping with players
+    // Calculate optimal initial position to avoid overlapping with players and UI elements
     const getOptimalPosition = () => {
         const humanIndex = players.findIndex(p => p.isHuman);
-        if (humanIndex === -1) return { x: 16, y: 16 }; // Fallback if no human player found
+        if (humanIndex === -1) return { x: 300, y: 100 }; // Fallback if no human player found
         
         const playerCount = players.length;
         
         if (playerCount === 2) {
-            // Human at bottom, bot at top - use top-right corner
-            return { x: 16, y: 16 };
+            // Human at bottom, bot at top - use top-center to avoid bot
+            return { x: 300, y: 100 };
         }
         
         if (playerCount === 3) {
-            // Human at bottom, bots at right and left - use top-right to avoid Cards in Play display
-            return { x: 16, y: 16 };
+            // Human at bottom, bots at right and left - use top-center to avoid both bots
+            return { x: 300, y: 100 };
         }
         
         if (playerCount === 4) {
-            // Human at bottom, bots at top, left, right - use bottom-right corner
-            return { x: 16, y: window.innerHeight - 200 };
+            // Human at bottom, bots at top, left, right - use bottom-center
+            return { x: 300, y: window.innerHeight - 200 };
         }
         
-        // Default fallback
-        return { x: 16, y: 16 };
+        // Default fallback - position in center to avoid all players
+        return { x: 300, y: 100 };
     };
 
     // Set initial position on mount
