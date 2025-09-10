@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { GameState, Card, GamePhase } from '../../types';
+import ConfirmationModal from './ConfirmationModal';
 
 interface ActionPanelProps {
   gameState: GameState;
@@ -26,6 +27,8 @@ interface ActionButtonProps {
     size?: 'sm' | 'md' | 'lg';
     requiresConfirmation?: boolean;
     confirmationMessage?: string;
+    confirmationTitle?: string;
+    confirmationVariant?: 'warning' | 'danger' | 'info';
 }
 
 const ActionButton: React.FC<ActionButtonProps> = ({ 
@@ -36,17 +39,20 @@ const ActionButton: React.FC<ActionButtonProps> = ({
     variant = 'primary',
     size = 'md',
     requiresConfirmation = false,
-    confirmationMessage
+    confirmationMessage,
+    confirmationTitle = "Confirm Action",
+    confirmationVariant = 'warning'
 }) => {
+    const [showConfirmation, setShowConfirmation] = useState(false);
     const getVariantClasses = () => {
         if (color) return color;
         
         switch (variant) {
-            case 'primary': return 'bg-cyan-600 hover:bg-cyan-500 shadow-cyan-500/25';
-            case 'secondary': return 'bg-gray-600 hover:bg-gray-500 shadow-gray-500/25';
-            case 'danger': return 'bg-red-600 hover:bg-red-500 shadow-red-500/25';
-            case 'warning': return 'bg-yellow-600 hover:bg-yellow-500 shadow-yellow-500/25';
-            default: return 'bg-cyan-600 hover:bg-cyan-500 shadow-cyan-500/25';
+            case 'primary': return 'bg-gradient-to-br from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 shadow-cyan-500/50 border-cyan-400';
+            case 'secondary': return 'bg-gradient-to-br from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 shadow-amber-500/50 border-amber-400';
+            case 'danger': return 'bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-red-500/50 border-red-400';
+            case 'warning': return 'bg-gradient-to-br from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 shadow-yellow-500/50 border-yellow-400';
+            default: return 'bg-gradient-to-br from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 shadow-cyan-500/50 border-cyan-400';
         }
     };
 
@@ -61,32 +67,52 @@ const ActionButton: React.FC<ActionButtonProps> = ({
 
     const handleClick = () => {
         if (requiresConfirmation && confirmationMessage) {
-            if (window.confirm(confirmationMessage)) {
-                onClick();
-            }
+            setShowConfirmation(true);
         } else {
             onClick();
         }
     };
 
+    const handleConfirm = () => {
+        setShowConfirmation(false);
+        onClick();
+    };
+
+    const handleCancel = () => {
+        setShowConfirmation(false);
+    };
+
     return (
-    <button
-            onClick={handleClick}
-        disabled={disabled}
-            className={`
-                ${getSizeClasses()} 
-                font-bold text-white rounded-lg shadow-md transition-all duration-200 
-                disabled:opacity-50 disabled:cursor-not-allowed 
-                ${getVariantClasses()} 
-                transform disabled:scale-100 hover:scale-105 active:scale-95
-                border-2 border-transparent hover:border-white/20
-                focus:outline-none focus:ring-4 focus:ring-white/30
-            `}
-            title={requiresConfirmation ? "Requires confirmation" : undefined}
-    >
-        {children}
-    </button>
-);
+        <>
+            <button
+                onClick={handleClick}
+                disabled={disabled}
+                className={`
+                    ${getSizeClasses()} 
+                    font-bold text-white rounded-xl shadow-lg transition-all duration-200 
+                    disabled:opacity-50 disabled:cursor-not-allowed 
+                    ${getVariantClasses()} 
+                    transform disabled:scale-100 hover:scale-105 active:scale-95
+                    border-2 hover:border-white/30
+                    focus:outline-none focus:ring-4 focus:ring-white/30
+                `}
+                title={requiresConfirmation ? "Requires confirmation" : undefined}
+            >
+                {children}
+            </button>
+            
+            <ConfirmationModal
+                isOpen={showConfirmation}
+                title={confirmationTitle}
+                message={confirmationMessage || "Are you sure you want to proceed?"}
+                confirmText="Yes, Continue"
+                cancelText="Cancel"
+                onConfirm={handleConfirm}
+                onCancel={handleCancel}
+                variant={confirmationVariant}
+            />
+        </>
+    );
 };
 
 
@@ -95,6 +121,45 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
     const humanPlayer = gameState.players.find(p => p.isHuman);
     const isHumanTurn = gameState.players[gameState.currentPlayerIndex]?.isHuman;
     
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const panelRef = useRef<HTMLDivElement>(null);
+
+    // Drag functionality
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (e.target === panelRef.current || (e.target as HTMLElement).closest('.drag-handle')) {
+            setIsDragging(true);
+            setDragStart({
+                x: e.clientX - position.x,
+                y: e.clientY - position.y
+            });
+        }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+        if (isDragging) {
+            setPosition({
+                x: e.clientX - dragStart.x,
+                y: e.clientY - dragStart.y
+            });
+        }
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    useEffect(() => {
+        if (isDragging) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            return () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+        }
+    }, [isDragging, dragStart]);
     
     const renderContent = () => {
         if (!humanPlayer) return null;
@@ -106,34 +171,44 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                 GamePhase.VOTE_SWAP, GamePhase.FINAL_SWAP_DECISION
             ];
             if (swapAndVotePhases.includes(gameState.gamePhase)) {
-                 return <p className="text-lg mb-2">Waiting for other players...</p>;
+                 return <p className="text-sm font-medium text-amber-100">Waiting for other players...</p>;
             }
         }
 
         switch(gameState.gamePhase) {
+            case GamePhase.DEALING:
+                return (
+                    <div className="text-amber-100">
+                        <p className="text-sm font-medium">Dealing cards...</p>
+                        <p className="text-xs opacity-80">Please wait while the dealer shuffles and deals the cards.</p>
+                    </div>
+                );
             case GamePhase.FIRST_SWAP_DECISION:
                 if (isHumanTurn) {
                     return (
-                        <>
-                            <p className="text-lg mb-2">Do you want to swap cards or stand pat?</p>
-                            <div className="flex space-x-4">
+                        <div>
+                            <p className="text-sm font-medium text-amber-100 mb-3">Do you want to swap cards or stand pat?</p>
+                            <div className="flex justify-center space-x-2">
                                 <ActionButton 
                                     onClick={() => onSwapDecision(true)} 
                                     variant="primary" 
-                                    size="lg"
+                                    size="sm"
                                 >
-                                    🔄 Swap Cards
+                                    🔄 Swap
                                 </ActionButton>
                                 <ActionButton 
                                     onClick={() => onSwapDecision(false)} 
                                     variant="secondary"
+                                    size="sm"
                                     requiresConfirmation={true}
-                                    confirmationMessage="Are you sure you want to stand pat? You won't be able to swap cards in this round."
+                                    confirmationTitle="Stand Pat?"
+                                    confirmationMessage="You won't be able to swap cards in this round if you stand pat. This decision cannot be undone."
+                                    confirmationVariant="warning"
                                 >
                                     ✋ Stand Pat
                                 </ActionButton>
                             </div>
-                        </>
+                        </div>
                     );
                 }
                 break;
@@ -143,131 +218,136 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                     const firstPlayer = gameState.players.find(p => p.hasMadeFirstSwapDecision && !p.hasStoodPat);
                     const playerName = firstPlayer ? firstPlayer.name : "A player";
                     
-                    // Debug: Log the swap amount (only once per render)
-                    if (gameState.swapAmount !== 0) {
-                        console.log(`[DEBUG] ActionPanel: swapAmount = ${gameState.swapAmount}, firstPlayer = ${playerName}`);
-                    }
+                    // Debug: Log the swap amount (only once per render) - commented out to prevent spam
+                    // if (gameState.swapAmount !== 0) {
+                    //     console.log(`[DEBUG] ActionPanel: swapAmount = ${gameState.swapAmount}, firstPlayer = ${playerName}`);
+                    // }
                     
                     // Don't show the swap decision if swapAmount is 0 (no one wants to swap)
                     if (gameState.swapAmount === 0) {
                         return (
-                            <>
-                                <p className="text-lg mb-2">No one wants to swap cards.</p>
-                                <p className="text-base mb-4">The game will proceed to voting.</p>
+                            <div>
+                                <p className="text-sm font-medium text-amber-100 mb-3">No one wants to swap cards. The game will proceed to voting.</p>
                                 <div className="flex justify-center">
                                     <ActionButton 
                                         onClick={() => onOtherPlayerSwap(false)} 
                                         variant="primary" 
-                                        size="lg"
+                                        size="sm"
                                     >
-                                        Continue to Voting
+                                        Continue
                                     </ActionButton>
                                 </div>
-                            </>
+                            </div>
                         );
                     }
                     
                     return (
-                        <>
-                            <p className="text-lg mb-2">{playerName} chose to swap {gameState.swapAmount} cards.</p>
-                            <p className="text-base mb-4">Do you want to swap the same number or stand pat?</p>
-                            <div className="flex space-x-4">
+                        <div>
+                            <p className="text-sm font-medium text-amber-100 mb-3">{playerName} chose to swap {gameState.swapAmount} cards. Do you want to swap the same number or stand pat?</p>
+                            <div className="flex justify-center space-x-2">
                                 <ActionButton 
                                     onClick={() => onOtherPlayerSwap(true)} 
                                     variant="primary" 
-                                    size="lg"
-                                >
-                                    🔄 Swap {gameState.swapAmount} Cards
-                                </ActionButton>
-                                <ActionButton 
-                                    onClick={() => onOtherPlayerSwap(false)} 
-                                    variant="secondary"
-                                    requiresConfirmation={true}
-                                    confirmationMessage="Are you sure you want to stand pat? You won't be able to swap cards in this round."
-                                >
-                                    ✋ Stand Pat
-                                </ActionButton>
-                            </div>
-                        </>
-                    );
-                }
-                break;
-            case GamePhase.FIRST_SWAP_ACTION:
-                 if (isHumanTurn) {
-                    return (
-                        <>
-                            <p className="text-lg mb-2">Select cards to swap, then confirm.</p>
-                            <ActionButton 
-                                onClick={() => onConfirmSwap(selectedCards)} 
-                                disabled={selectedCards.length === 0}
-                                variant="primary"
-                                size="lg"
-                            >
-                                ✅ Confirm Swap ({selectedCards.length})
-                            </ActionButton>
-                        </>
-                    );
-                }
-                break;
-            case GamePhase.OTHERS_SWAP_DECISION:
-                 if (isHumanTurn && !humanPlayer.hasStoodPat) {
-                     return (
-                        <>
-                            <p className="text-lg mb-2">{gameState.players[gameState.firstPlayerToAct].name} swapped {gameState.swapAmount} cards. Do you want to do the same?</p>
-                            <div className="flex space-x-4">
-                                <ActionButton 
-                                    onClick={() => onOtherPlayerSwap(true)} 
-                                    variant="primary"
+                                    size="sm"
                                 >
                                     🔄 Swap {gameState.swapAmount}
                                 </ActionButton>
                                 <ActionButton 
                                     onClick={() => onOtherPlayerSwap(false)} 
                                     variant="secondary"
+                                    size="sm"
                                     requiresConfirmation={true}
-                                    confirmationMessage="Are you sure you want to stand pat? You won't be able to swap cards in this round."
+                                    confirmationTitle="Stand Pat?"
+                                    confirmationMessage="You won't be able to swap cards in this round if you stand pat. This decision cannot be undone."
+                                    confirmationVariant="warning"
                                 >
                                     ✋ Stand Pat
                                 </ActionButton>
                             </div>
-                        </>
+                        </div>
+                    );
+                }
+                break;
+            case GamePhase.FIRST_SWAP_ACTION:
+                 if (isHumanTurn) {
+                    return (
+                        <div className="flex items-center space-x-3">
+                            <p className="text-sm font-medium text-amber-100">Select cards to swap, then confirm.</p>
+                            <ActionButton 
+                                onClick={() => onConfirmSwap(selectedCards)} 
+                                disabled={selectedCards.length === 0}
+                                variant="primary"
+                                size="sm"
+                            >
+                                ✅ Confirm ({selectedCards.length})
+                            </ActionButton>
+                        </div>
+                    );
+                }
+                break;
+            case GamePhase.OTHERS_SWAP_DECISION:
+                 if (isHumanTurn && !humanPlayer.hasStoodPat) {
+                     return (
+                        <div className="flex items-center space-x-3">
+                            <p className="text-sm font-medium text-amber-100">{gameState.players[gameState.firstPlayerToAct].name} swapped {gameState.swapAmount} cards. Do you want to do the same?</p>
+                            <div className="flex space-x-2">
+                                <ActionButton 
+                                    onClick={() => onOtherPlayerSwap(true)} 
+                                    variant="primary"
+                                    size="sm"
+                                >
+                                    🔄 Swap {gameState.swapAmount}
+                                </ActionButton>
+                                <ActionButton 
+                                    onClick={() => onOtherPlayerSwap(false)} 
+                                    variant="secondary"
+                                    size="sm"
+                                    requiresConfirmation={true}
+                                    confirmationTitle="Stand Pat?"
+                                    confirmationMessage="You won't be able to swap cards in this round if you stand pat. This decision cannot be undone."
+                                    confirmationVariant="warning"
+                                >
+                                    ✋ Stand Pat
+                                </ActionButton>
+                            </div>
+                        </div>
                      );
                  }
                 break;
             case GamePhase.OTHERS_SWAP_ACTION:
                 if (isHumanTurn) {
                     return (
-                        <>
-                            <p className="text-lg mb-2">Select {gameState.swapAmount} cards to swap, then confirm.</p>
-                            <ActionButton onClick={() => onConfirmSwap(selectedCards)} disabled={selectedCards.length !== gameState.swapAmount}>
-                                Confirm Swap ({selectedCards.length}/{gameState.swapAmount})
+                        <div className="flex items-center space-x-3">
+                            <p className="text-sm font-medium text-amber-100">Select {gameState.swapAmount} cards to swap, then confirm.</p>
+                            <ActionButton onClick={() => onConfirmSwap(selectedCards)} disabled={selectedCards.length !== gameState.swapAmount} size="sm">
+                                Confirm ({selectedCards.length}/{gameState.swapAmount})
                             </ActionButton>
-                        </>
+                        </div>
                     );
                 }
                 break;
             case GamePhase.VOTE_SWAP_DECISION:
                 if (isHumanTurn && !humanPlayer.hasStoodPat && humanPlayer.wantsToVote === undefined) {
                     return (
-                        <>
-                            <p className="text-lg mb-2">The final swap is about to happen. Do you want to participate in the vote?</p>
-                            <div className="flex space-x-4">
-                                <ActionButton onClick={() => onVoteDecision(true)}>Vote to Swap</ActionButton>
-                                <ActionButton onClick={() => onVoteDecision(false)} color="bg-gray-600 hover:bg-gray-500">Stay</ActionButton>
+                        <div className="flex items-center space-x-3">
+                            <p className="text-sm font-medium text-amber-100">Time to vote on the final swap! You participated in the first swap, so you can vote on how many cards to swap in the final round.</p>
+                            <div className="flex space-x-2">
+                                <ActionButton onClick={() => onVoteDecision(true)} size="sm">Participate</ActionButton>
+                                <ActionButton onClick={() => onVoteDecision(false)} color="bg-gray-600 hover:bg-gray-500" size="sm">Skip</ActionButton>
                             </div>
-                        </>
+                        </div>
                     );
                 }
                 break;
             case GamePhase.VOTE_SWAP:
-                if (isHumanTurn && !humanPlayer.hasVoted && humanPlayer.wantsToVote) {
+                if (isHumanTurn && !humanPlayer.hasVoted && !humanPlayer.hasStoodPat) {
                     return (
-                        <>
-                            <p className="text-lg mb-2">Vote for how many cards to swap:</p>
-                            <div className="flex space-x-2">
-                                {[1, 2, 3, 4, 5].map(n => <ActionButton key={n} onClick={() => onVote(n)}>{n}</ActionButton>)}
+                        <div>
+                            <p className="text-sm font-medium text-amber-100 mb-3">Vote for how many cards to swap:</p>
+                            <div className="flex justify-center space-x-1">
+                                {[1, 2, 3, 4, 5].map(n => <ActionButton key={n} onClick={() => onVote(n)} size="sm">{n}</ActionButton>)}
                             </div>
-                        </>
+                        </div>
                     )
                 }
                 break;
@@ -275,55 +355,48 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                 console.log(`[DEBUG] ActionPanel FINAL_SWAP_DECISION: isHumanTurn=${isHumanTurn}, hasMadeFinalSwapDecision=${humanPlayer.hasMadeFinalSwapDecision}, hasStoodPat=${humanPlayer.hasStoodPat}`);
                 if (isHumanTurn && !humanPlayer.hasMadeFinalSwapDecision) {
                     return (
-                        <>
-                            <p className="text-lg mb-2">The vote is to swap {gameState.voteResult} cards. Do you want to participate?</p>
-                             <div className="flex space-x-4">
-                                <ActionButton onClick={() => onFinalSwapDecision(true)}>Yes, swap {gameState.voteResult} cards</ActionButton>
-                                <ActionButton onClick={() => onFinalSwapDecision(false)} color="bg-gray-600 hover:bg-gray-500">No, I'll pass</ActionButton>
+                        <div className="flex items-center space-x-3">
+                            <p className="text-sm font-medium text-amber-100">The vote is to swap {gameState.voteResult} cards. Do you want to participate?</p>
+                            <div className="flex space-x-2">
+                                <ActionButton onClick={() => onFinalSwapDecision(true)} size="sm">Yes, swap {gameState.voteResult}</ActionButton>
+                                <ActionButton onClick={() => onFinalSwapDecision(false)} color="bg-gray-600 hover:bg-gray-500" size="sm">No, pass</ActionButton>
                             </div>
-                        </>
+                        </div>
                     )
                 }
                 break;
             case GamePhase.FINAL_SWAP_ACTION:
-                console.log(`[DEBUG] ActionPanel FINAL_SWAP_ACTION: isHumanTurn=${isHumanTurn}, hasStoodPat=${humanPlayer.hasStoodPat}, hasMadeFinalSwapDecision=${humanPlayer.hasMadeFinalSwapDecision}, voteResult=${gameState.voteResult}`);
                 if (isHumanTurn && !humanPlayer.hasStoodPat && humanPlayer.hasMadeFinalSwapDecision) {
                      return (
-                        <>
-                            <p className="text-lg mb-2">Select {gameState.voteResult} cards for the final swap.</p>
-                            <ActionButton onClick={() => onFinalSwap(selectedCards)} disabled={selectedCards.length !== gameState.voteResult}>
-                                Confirm Swap ({selectedCards.length}/{gameState.voteResult})
+                        <div className="flex items-center space-x-3">
+                            <p className="text-sm font-medium text-amber-100">Select {gameState.voteResult} cards for the final swap.</p>
+                            <ActionButton onClick={() => onFinalSwap(selectedCards)} disabled={selectedCards.length !== gameState.voteResult} size="sm">
+                                Confirm ({selectedCards.length}/{gameState.voteResult})
                             </ActionButton>
-                        </>
+                        </div>
                     );
                 } else if (isHumanTurn && humanPlayer.hasStoodPat) {
-                    return <p className="text-lg mb-2">You've decided not to participate in the final swap. Waiting for other players...</p>;
+                    return <p className="text-sm font-medium text-amber-100">You've decided not to participate in the final swap. Waiting for other players...</p>;
                 }
                  break;
             case GamePhase.FINAL_SWAP_ONE_CARD_SELECT:
                 if (isHumanTurn) {
-                    return <p className="text-lg mb-2">Select a card from your hand to swap.</p>;
+                    return <p className="text-sm font-medium text-amber-100">Select a card from your hand to swap.</p>;
                 }
                 break;
             case GamePhase.GAMEPLAY:
-                if (isHumanTurn) {
-                    return (
-                        <ActionButton onClick={onPlayCards} disabled={selectedCards.length === 0}>
-                            Play Card(s)
-                        </ActionButton>
-                    )
-                }
-                break;
+                // Don't show ActionPanel during gameplay - use floating play button instead
+                return null;
             case GamePhase.MINIGAME_SWAP:
                 if (isHumanTurn) {
                     return (
-                        <>
-                            <p className="text-lg mb-2">Minigame! Keep your 3 cards or swap for 3 new ones?</p>
-                            <div className="flex space-x-4">
-                                <ActionButton onClick={() => onMinigameSwap(true)}>Swap</ActionButton>
-                                <ActionButton onClick={() => onMinigameSwap(false)} color="bg-gray-600 hover:bg-gray-500">Keep</ActionButton>
+                        <div className="flex items-center space-x-3">
+                            <p className="text-sm font-medium text-amber-100">Minigame! Keep your 3 cards or swap for 3 new ones?</p>
+                            <div className="flex space-x-2">
+                                <ActionButton onClick={() => onMinigameSwap(true)} size="sm">Swap</ActionButton>
+                                <ActionButton onClick={() => onMinigameSwap(false)} color="bg-gray-600 hover:bg-gray-500" size="sm">Keep</ActionButton>
                             </div>
-                        </>
+                        </div>
                     );
                 }
                 break;
@@ -336,9 +409,31 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
     if (!content) return null;
 
     return (
-        <div className="absolute bg-black/60 p-6 rounded-xl shadow-lg z-50 flex flex-col items-center max-w-md" style={{top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 'auto', minWidth: '300px'}}>
-             {timer > 0 && <div className="absolute -top-4 -right-4 w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-xl font-bold border-2 border-white">{timer}</div>}
-             {content}
+        <div 
+            ref={panelRef}
+            className="fixed z-50 cursor-move"
+            style={{
+                left: position.x === 0 ? '50%' : `${position.x}px`,
+                top: position.y === 0 ? '16px' : `${position.y}px`,
+                transform: position.x === 0 ? 'translateX(-50%)' : 'none'
+            }}
+            onMouseDown={handleMouseDown}
+        >
+            <div className="bg-gradient-to-r from-amber-800/90 to-amber-900/90 backdrop-blur-md border-2 border-amber-400/70 rounded-xl shadow-2xl p-4 text-center min-w-[400px] max-w-[600px]">
+                <div className="drag-handle flex items-center justify-center gap-3 mb-2 cursor-move">
+                    {timer > 0 && (
+                        <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-sm font-bold border-2 border-white shadow-lg">
+                            {timer}
+                        </div>
+                    )}
+                    <div className="w-6 h-6 bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center text-sm">
+                        🎯
+                    </div>
+                    <div className="text-amber-200 text-sm font-semibold">ACTION REQUIRED</div>
+                    <div className="text-amber-300 text-xs ml-2">(drag to move)</div>
+                </div>
+                {content}
+            </div>
         </div>
     )
 }

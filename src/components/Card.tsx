@@ -8,12 +8,41 @@ interface CardProps {
   isPlayable?: boolean;
   onClick?: () => void;
   small?: boolean;
+  faceDown?: boolean;
 }
 
-const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, isPlayable = true }) => {
+const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, isPlayable = true, faceDown = false }) => {
   const isRed = card.suit === '♥' || card.suit === '♦';
   const colorClass = isRed ? 'text-red-500' : 'text-black';
   const sizeClass = small ? 'w-10 h-14 text-sm' : 'w-16 h-24 text-2xl';
+
+  // If face down, render a face-down card
+  if (faceDown) {
+    return (
+      <div
+        className={`card-component relative ${sizeClass} bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg shadow-md flex flex-col justify-center items-center p-1 transition-all duration-200 ease-in-out ${
+          isSelected ? 'transform -translate-y-4 ring-4 ring-cyan-400 shadow-2xl' : ''
+        } ${onClick && isPlayable ? 'cursor-pointer hover:-translate-y-2 hover:shadow-lg' : ''} ${
+          !isPlayable ? 'opacity-60 cursor-not-allowed' : ''
+        }`}
+        onClick={onClick && isPlayable ? onClick : undefined}
+        title="Face down card"
+      >
+        {/* Face down pattern */}
+        <div className="text-white text-xs font-bold opacity-80">
+          <div className="text-center">🂠</div>
+          <div className="text-center text-xs mt-1">GURCH</div>
+        </div>
+        
+        {/* Selection indicator for face down cards */}
+        {isSelected && (
+          <div className="absolute -top-2 -right-2 bg-cyan-400 text-black text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+            ✓
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const handleClick = () => {
     if(onClick && isPlayable) {
@@ -43,7 +72,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
 
   return (
     <div
-      className={`relative ${sizeClass} bg-white rounded-lg shadow-md flex flex-col justify-between p-1 transition-all duration-200 ease-in-out ${colorClass} ${
+      className={`card-component relative ${sizeClass} bg-white rounded-lg shadow-md flex flex-col justify-between p-1 transition-all duration-200 ease-in-out ${colorClass} ${
         isSelected ? 'transform -translate-y-4 ring-4 ring-cyan-400 shadow-2xl' : ''
       } ${onClick && isPlayable ? 'cursor-pointer hover:-translate-y-2 hover:shadow-lg' : ''} ${
         !isPlayable ? 'opacity-60 cursor-not-allowed' : ''

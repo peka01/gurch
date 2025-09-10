@@ -67,12 +67,12 @@ const App: React.FC = () => {
         setGameStarted(true);
     } catch (error) {
         console.warn("Avatar generation failed or timed out, using fallback avatars:", error);
-        // Fallback avatars
+        // Fallback avatars - using more reliable sources
         const fallbackAvatars = [
-            'https://picsum.photos/seed/player1/100',
-            'https://picsum.photos/seed/player2/100',
-            'https://picsum.photos/seed/player3/100',
-            'https://picsum.photos/seed/player4/100'
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=player1&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf',
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=player2&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf',
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=player3&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf',
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=player4&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf'
         ];
         newPlayers.forEach((player, index) => {
             player.avatar = fallbackAvatars[index];
