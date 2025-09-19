@@ -91,7 +91,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 text-white p-4 flex flex-col items-center justify-center">
-      <header className="w-full text-center mb-4">
+      <header className="w-full text-center mb-4 relative z-50">
         <h1 className="text-4xl md:text-5xl font-bold text-cyan-400" style={{ textShadow: '0 0 10px rgba(0, 255, 255, 0.7)'}}>
           <i className="fas fa-crown mr-3"></i>Gurch Card Game
         </h1>

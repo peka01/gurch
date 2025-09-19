@@ -14,7 +14,7 @@ const Stick: React.FC<StickProps> = ({ position, isAnimating = false, className 
         left: position.x - 15,
         top: position.y - 30,
         transform: isAnimating ? 'scale(1.5) rotate(15deg)' : 'scale(1) rotate(0deg)',
-        zIndex: 70,
+        zIndex: isAnimating ? 70 : 35,
         filter: isAnimating ? 'drop-shadow(0 0 30px rgba(255,215,0,1))' : 'drop-shadow(0 0 10px rgba(0,0,0,0.5))'
       }}
     >

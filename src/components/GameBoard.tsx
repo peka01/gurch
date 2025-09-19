@@ -581,31 +581,42 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         const player = gameState.players.find(p => p.id === gameState.thinkingPlayerId);
         if (!player) return;
 
+        console.log(`[DEBUG] Bot ${player.name} making decision for phase: ${gameState.gamePhase}`);
+
         switch (gameState.gamePhase) {
             case GamePhase.FIRST_SWAP_DECISION:
             case GamePhase.FIRST_SWAP_OTHERS_DECISION:
                 const wantsToSwap = Math.random() > 0.3; // 70% chance to swap
+                console.log(`[DEBUG] Bot ${player.name} deciding to swap: ${wantsToSwap}`);
                 handleSwapDecision(wantsToSwap);
                 break;
             case GamePhase.OTHERS_SWAP_DECISION:
+                console.log(`[DEBUG] Bot ${player.name} deciding to swap in others phase`);
                 handleOtherPlayerSwap(true); // Bots always swap if they can
                 break;
             case GamePhase.VOTE_SWAP_DECISION:
-                handleVoteDecision(Math.random() > 0.2); // 80% chance to vote
+                const wantsToVote = Math.random() > 0.2; // 80% chance to vote
+                console.log(`[DEBUG] Bot ${player.name} deciding to vote: ${wantsToVote}`);
+                handleVoteDecision(wantsToVote);
                 break;
             case GamePhase.VOTE_SWAP:
-                handleVote(Math.floor(Math.random() * 5) + 1); // 1-5 cards
+                const voteAmount = Math.floor(Math.random() * 5) + 1; // 1-5 cards
+                console.log(`[DEBUG] Bot ${player.name} voting for: ${voteAmount} cards`);
+                handleVote(voteAmount);
                 break;
             case GamePhase.FINAL_SWAP_DECISION:
+                console.log(`[DEBUG] Bot ${player.name} deciding to participate in final swap`);
                 handleFinalSwapDecision(true); // Bots always participate if they didn't win vote
                 break;
+            default:
+                console.log(`[DEBUG] Bot ${player.name} - no action for phase: ${gameState.gamePhase}`);
         }
         setGameState(prev => ({...prev, thinkingPlayerId: undefined}));
       }, 1500);
 
       return () => clearTimeout(timeoutId);
     }
-  }, [gameState.thinkingPlayerId]);
+  }, [gameState.thinkingPlayerId, gameState.gamePhase]);
 
   useEffect(() => {
     // This effect handles the visual delay for bot card swaps
@@ -2483,6 +2494,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         roundWinnerId={gameState.roundWinnerId}
         isGameplayPhase={gameState.gamePhase === GamePhase.GAMEPLAY}
         isRoundOver={gameState.gamePhase === GamePhase.ROUND_OVER}
+        currentPlayerId={gameState.players[gameState.currentPlayerIndex]?.id}
       />
 
       {/* Revealed Card for 1-card swap */}

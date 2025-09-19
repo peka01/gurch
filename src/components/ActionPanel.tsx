@@ -411,10 +411,10 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
     return (
         <div 
             ref={panelRef}
-            className="fixed z-50 cursor-move"
+            className="fixed z-40 cursor-move"
             style={{
                 left: position.x === 0 ? '50%' : `${position.x}px`,
-                top: position.y === 0 ? '16px' : `${position.y}px`,
+                top: position.y === 0 ? '120px' : `${position.y}px`,
                 transform: position.x === 0 ? 'translateX(-50%)' : 'none'
             }}
             onMouseDown={handleMouseDown}

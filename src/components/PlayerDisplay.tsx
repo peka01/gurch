@@ -58,8 +58,6 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, 
     <div className={`absolute transform transition-all duration-500 z-10`} style={positionStyle}>
       {/* Poker Seat Design */}
       <div className={`relative bg-gradient-to-br from-amber-800 to-amber-900 rounded-2xl p-4 shadow-2xl border-4 transition-all duration-300 ${ringClass} min-w-[200px]`}>
-        {/* Seat Back */}
-        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-16 h-8 bg-gradient-to-br from-amber-700 to-amber-800 rounded-t-full border-2 border-amber-600"></div>
         
         {/* Player Avatar */}
         <div className="flex flex-col items-center space-y-3">
