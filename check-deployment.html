@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deployment Check</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .check { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>GitHub Pages Deployment Check</h1>
+    
+    <div class="check">
+        <h3>Check if these files exist:</h3>
+        <ul>
+            <li><a href="/gurch2/assets/index-BwxO2C34.css" target="_blank">CSS File</a></li>
+            <li><a href="/gurch2/assets/index-BwoQPaUK.js" target="_blank">JS File</a></li>
+            <li><a href="/gurch2/vite.svg" target="_blank">Favicon</a></li>
+        </ul>
+    </div>
+    
+    <div class="check">
+        <h3>Alternative paths to try:</h3>
+        <ul>
+            <li><a href="/assets/index-BwxO2C34.css" target="_blank">CSS (no /gurch2/)</a></li>
+            <li><a href="/assets/index-BwoQPaUK.js" target="_blank">JS (no /gurch2/)</a></li>
+            <li><a href="/vite.svg" target="_blank">Favicon (no /gurch2/)</a></li>
+        </ul>
+    </div>
+    
+    <div class="check">
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Click each link above to see which ones work</li>
+            <li>If the "/gurch2/" paths don't work, we need to fix the base path</li>
+            <li>If the paths without "/gurch2/" work, we need to update the HTML</li>
+        </ol>
+    </div>
+</body>
+</html>
