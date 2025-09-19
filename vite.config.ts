@@ -7,10 +7,7 @@ export default defineConfig(({ mode }) => {
     return {
       plugins: [react()],
       base: process.env.NODE_ENV === 'production' ? '/gurch2/' : '/',
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY || ''),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || '')
-      },
+      // Gemini API configuration removed - API disabled
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
