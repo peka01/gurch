@@ -2654,7 +2654,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       )}
       
       {/* Human Player's Hand Cards Only */}
-      <div className="absolute bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-40">
+      <div className="absolute bottom-4 sm:bottom-6 left-0 right-0 flex justify-center z-40">
         <div className="flex justify-center items-center space-x-1 sm:space-x-2 bg-black/20 rounded-xl p-2 sm:p-4 backdrop-blur-sm border border-amber-500/30">
         {/* Show visual dealing cards if dealing is in progress */}
         {isDealing ? (
