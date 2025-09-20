@@ -85,9 +85,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
   const [stickAnimating, setStickAnimating] = useState<boolean>(false);
   const [showCardClearAnimation, setShowCardClearAnimation] = useState<boolean>(false);
   const hasDealt = React.useRef(false);
-  const processedDecisions = useRef<Set<string>>(new Set());
+  // Complex deduplication system removed - using simple state guards instead
   const lastCardClick = useRef<{card: string, timestamp: number} | null>(null);
-  const lastDecisionCall = useRef<{key: string, timestamp: number} | null>(null);
+  // Removed complex timestamp tracking
   
   // Fallback system to prevent stalls
   const [phaseStartTime, setPhaseStartTime] = useState<number>(Date.now());
@@ -373,22 +373,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     setStallCount(0);
   }, [gameState.gamePhase]);
 
-  // Clear processed decisions only when starting a completely new decision phase
-  useEffect(() => {
-    // Only clear for phases that start new decision rounds
-    const phasesThatNeedClearing = [
-      GamePhase.DEALING,
-      GamePhase.FIRST_SWAP_DECISION, 
-      GamePhase.VOTE_SWAP_DECISION,
-      GamePhase.FINAL_SWAP_DECISION,
-      GamePhase.GAMEPLAY
-    ];
-    
-    if (phasesThatNeedClearing.includes(gameState.gamePhase)) {
-      processedDecisions.current.clear();
-      console.log(`[DEBUG] Cleared processed decisions for phase: ${gameState.gamePhase}`);
-    }
-  }, [gameState.gamePhase]);
+  // Simplified phase tracking - no complex decision clearing needed
 
   // Main Game Loop using useEffect
   useEffect(() => {
@@ -769,8 +754,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     console.log("[DEBUG] Current hand sizes before dealing:");
     gameState.players.forEach(p => console.log(`  ${p.name}: ${p.hand.length} cards`));
     
-    // Clear processed decisions for new game
-    processedDecisions.current.clear();
+    // Simple dealing - no complex tracking needed
     
     // Check if cards have already been dealt
     if (gameState.players.some(p => p.hand.length > 0)) {
@@ -903,32 +887,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     }, 2000);
   };
   
-  const handleSwapDecision = (wantsToSwap: boolean) => {
+  const handleSwapDecision = useCallback((wantsToSwap: boolean) => {
     setTimer(0);
     const playerIndex = gameState.currentPlayerIndex;
     const player = gameState.players[playerIndex];
-    const decisionKey = `${player.id}-${gameState.gamePhase}`;
 
     console.log(`[DEBUG] handleSwapDecision called: player=${player.name}, wantsToSwap=${wantsToSwap}, phase=${gameState.gamePhase}`);
 
-    // Prevent duplicate execution using ref and timestamp
-    const now = Date.now();
-    if (processedDecisions.current.has(decisionKey) || 
-        (lastDecisionCall.current && 
-         lastDecisionCall.current.key === decisionKey && 
-         now - lastDecisionCall.current.timestamp < 200)) {
-      console.log(`[DEBUG] Decision already processed for ${player.name}, skipping`);
-      return;
-    }
-    lastDecisionCall.current = { key: decisionKey, timestamp: now };
-
-    // Additional safety check - if player already made this decision, skip
+    // SIMPLE guard - if player already made decision, exit immediately
     if (player.hasMadeFirstSwapDecision) {
-      console.log(`[DEBUG] Player ${player.name} already made first swap decision, skipping`);
+      console.log(`[DEBUG] Player ${player.name} already decided, ignoring duplicate call`);
       return;
     }
-
-    processedDecisions.current.add(decisionKey);
 
     // Clear any existing thinking state
     setGameState(prev => ({ ...prev, thinkingPlayerId: undefined }));
@@ -1051,7 +1021,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             currentPlayerIndex: nextPlayerIndex,
         };
     });
-  }
+  }, [gameState.currentPlayerIndex, gameState.gamePhase, gameState.players, setTimer, addCommentary, setSwappingCards, findNextPlayerForDecision]);
   
   const handleOtherPlayerSwap = (wantsToSwap: boolean) => {
       setTimer(0);
@@ -1131,20 +1101,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       }
   }
 
-  const handleVote = (amount: number) => {
+  const handleVote = useCallback((amount: number) => {
       setTimer(0);
       const playerIndex = gameState.currentPlayerIndex;
       const player = gameState.players[playerIndex];
-      const decisionKey = `${player.id}-vote`;
 
       console.log(`[DEBUG] handleVote called: player=${player.name}, amount=${amount}`);
 
-      // Prevent duplicate execution
-      if (processedDecisions.current.has(decisionKey)) {
-          console.log(`[DEBUG] Vote already processed for ${player.name}, skipping`);
+      // SIMPLE guard - if player already voted, exit immediately
+      if (player.hasVoted) {
+          console.log(`[DEBUG] Player ${player.name} already voted, ignoring duplicate call`);
           return;
       }
-      processedDecisions.current.add(decisionKey);
 
       const voteMessage = amount === 0 ? "not to swap any cards" : `to swap ${amount} card(s)`;
       addCommentary(`${player.name} votes ${voteMessage}.`);
@@ -1219,27 +1187,20 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
           return {...prev, players: newPlayers, currentPlayerIndex: nextVoterIndex};
       });
       setTimer(10);
-  }
+  }, [gameState.currentPlayerIndex, gameState.players, addCommentary, setTimer]);
   
-  const handleVoteDecision = (wantsToVote: boolean) => {
+  const handleVoteDecision = useCallback((wantsToVote: boolean) => {
       const playerIndex = gameState.currentPlayerIndex;
       const player = gameState.players[playerIndex];
-      const decisionKey = `${player.id}-vote-decision`;
 
       console.log(`[DEBUG] handleVoteDecision called: player=${player.name}, wantsToVote=${wantsToVote}`);
 
-      // Prevent duplicate execution - check both the decision key and if the player already has a decision
-      const now = Date.now();
-      if (processedDecisions.current.has(decisionKey) || 
-          player.wantsToVote !== undefined ||
-          (lastDecisionCall.current && 
-           lastDecisionCall.current.key === decisionKey && 
-           now - lastDecisionCall.current.timestamp < 200)) {
-          console.log(`[DEBUG] Vote decision already processed for ${player.name}, skipping`);
+      // SIMPLE guard - if player already has vote decision, exit immediately
+      if (player.wantsToVote !== undefined) {
+          console.log(`[DEBUG] Player ${player.name} already has vote decision, ignoring duplicate call`);
           return;
       }
-      lastDecisionCall.current = { key: decisionKey, timestamp: now };
-      processedDecisions.current.add(decisionKey);
+
       console.log(`[DEBUG] Processing vote decision for ${player.name}: wantsToVote=${wantsToVote}`);
 
       // Clear any existing thinking state
@@ -1282,7 +1243,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             return {...prev, players: newPlayers};
           }
       });
-  };
+  }, [gameState.currentPlayerIndex, gameState.players, addCommentary, findNextPlayerForDecision]);
 
   const handleFinalSwapDecision = (participate: boolean) => {
     setTimer(0);
@@ -1984,9 +1945,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
 
           addCommentary(`${prev.players[nextLeaderIndex].name} won the last round and will start.`);
           
-          // Clear processed decisions for the new round
-          processedDecisions.current.clear();
-          console.log(`[DEBUG] Starting new round, cleared processed decisions. Winner: ${prev.players[nextLeaderIndex].name}`);
+          // Starting new round
+          console.log(`[DEBUG] Starting new round. Winner: ${prev.players[nextLeaderIndex].name}`);
               
               // Clear all played cards and reset for next round
               const playersWithClearedCards = prev.players.map(player => ({
