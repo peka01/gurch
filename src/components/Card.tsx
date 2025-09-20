@@ -34,10 +34,10 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
         } touch-manipulation`}
         style={{
           background: `
-            radial-gradient(circle at 25% 25%, #dc2626 2px, transparent 2px),
-            radial-gradient(circle at 75% 75%, #dc2626 2px, transparent 2px),
-            radial-gradient(circle at 25% 75%, #dc2626 1px, transparent 1px),
-            radial-gradient(circle at 75% 25%, #dc2626 1px, transparent 1px),
+            radial-gradient(circle at 25% 25%, #1d4ed8 2px, transparent 2px),
+            radial-gradient(circle at 75% 75%, #1d4ed8 2px, transparent 2px),
+            radial-gradient(circle at 25% 75%, #1d4ed8 1px, transparent 1px),
+            radial-gradient(circle at 75% 25%, #1d4ed8 1px, transparent 1px),
             linear-gradient(45deg, #1e3a8a 25%, transparent 25%),
             linear-gradient(-45deg, #1e3a8a 25%, transparent 25%),
             linear-gradient(45deg, transparent 75%, #1e3a8a 75%),
@@ -46,17 +46,17 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
           `,
           backgroundColor: '#1e40af',
           backgroundSize: '8px 8px, 8px 8px, 6px 6px, 6px 6px, 4px 4px, 4px 4px, 4px 4px, 4px 4px, 100% 100%',
-          border: '2px solid #991b1b',
-          boxShadow: 'inset 0 0 0 1px #dc2626, 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1)'
+          border: '2px solid #1e3a8a',
+          boxShadow: 'inset 0 0 0 1px #1d4ed8, 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1)'
         }}
         onClick={onClick && isPlayable ? onClick : undefined}
         title="Face down card"
       >
         {/* Traditional playing card back pattern */}
-        <div className="absolute inset-2 border border-red-400 rounded flex items-center justify-center">
+        <div className="absolute inset-2 border border-blue-400 rounded flex items-center justify-center">
           <div className="text-center">
             {/* Traditional ornate pattern using Unicode symbols */}
-            <div className="text-red-200 text-lg leading-none">
+            <div className="text-blue-200 text-lg leading-none">
               <div className="grid grid-cols-3 gap-1 text-xs">
                 <span>❖</span><span>♦</span><span>❖</span>
                 <span>♦</span><span className="text-base">♠</span><span>♦</span>
@@ -112,8 +112,8 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
         !isPlayable ? 'opacity-60 cursor-not-allowed' : ''
       } touch-manipulation`}
       style={{
-        backgroundColor: isCommander ? '#fefce8' : '#ffffff', // Yellow bg for commander cards
-        border: isCommander ? '2px solid #facc15' : '1px solid #e5e7eb', // Yellow border for commander cards
+        backgroundColor: isCommander ? '#fefce8' : '#ffffff', // Yellow bg for commander cards, white for regular cards
+        border: isCommander ? '2px solid #facc15' : '1px solid #e5e7eb', // Yellow border for commander, gray for regular
         boxShadow: isCommander 
           ? '0 0 0 2px #fde047, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' 
           : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
