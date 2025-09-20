@@ -519,9 +519,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             
             if (!currentPlayer.isHuman) {
                 const botPlayer = currentPlayer;
-                    // Bot needs to swap cards
-                    const hand = [...botPlayer.hand].sort((a,b) => b.value - a.value);
-                    const cardsToSwap = hand.slice(0, gameState.voteResult);
+                    // Strategic bot card selection for multi-card swap
+                    const cardsToSwap = selectWorstCardsForSwap(botPlayer.hand, gameState.voteResult);
                     timeoutId = setTimeout(() => handleFinalSwap(cardsToSwap), 2000);
             }
             // If it's a human's turn, the ActionPanel will handle the UI
@@ -605,27 +604,48 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         switch (gameState.gamePhase) {
             case GamePhase.FIRST_SWAP_DECISION:
             case GamePhase.FIRST_SWAP_OTHERS_DECISION:
-                const wantsToSwap = Math.random() > 0.3; // 70% chance to swap
-                console.log(`[DEBUG] Bot ${player.name} deciding to swap: ${wantsToSwap}`);
+                // Strategic swap decision based on hand quality
+                const handQuality = evaluateHandQuality(player.hand);
+                const wantsToSwap = handQuality < 8; // Swap if hand quality is poor
+                console.log(`[STRATEGIC] Bot ${player.name} hand quality: ${handQuality.toFixed(1)}, deciding to swap: ${wantsToSwap}`);
                 handleSwapDecision(wantsToSwap);
                 break;
             case GamePhase.OTHERS_SWAP_DECISION:
-                console.log(`[DEBUG] Bot ${player.name} deciding to swap in others phase`);
-                handleOtherPlayerSwap(true); // Bots always swap if they can
+                // Strategic decision: swap if hand quality is below average
+                const currentQuality = evaluateHandQuality(player.hand);
+                const shouldSwapInOthers = currentQuality < 6;
+                console.log(`[STRATEGIC] Bot ${player.name} in others swap, quality: ${currentQuality.toFixed(1)}, swapping: ${shouldSwapInOthers}`);
+                handleOtherPlayerSwap(shouldSwapInOthers);
                 break;
             case GamePhase.VOTE_SWAP_DECISION:
-                const wantsToVote = Math.random() > 0.2; // 80% chance to vote
-                console.log(`[DEBUG] Bot ${player.name} deciding to vote: ${wantsToVote}`);
+                // Strategic voting: participate if hand needs improvement
+                const voteHandQuality = evaluateHandQuality(player.hand);
+                const wantsToVote = voteHandQuality < 10; // Vote if hand could be better
+                console.log(`[STRATEGIC] Bot ${player.name} vote decision, quality: ${voteHandQuality.toFixed(1)}, voting: ${wantsToVote}`);
                 handleVoteDecision(wantsToVote);
                 break;
             case GamePhase.VOTE_SWAP:
-                const voteAmount = Math.floor(Math.random() * 5) + 1; // 1-5 cards
-                console.log(`[DEBUG] Bot ${player.name} voting for: ${voteAmount} cards`);
+                // Strategic vote amount based on hand assessment
+                const quality = evaluateHandQuality(player.hand);
+                let voteAmount;
+                if (quality < 4) {
+                    voteAmount = 4; // Desperate - need major changes
+                } else if (quality < 8) {
+                    voteAmount = 3; // Need improvement
+                } else if (quality < 12) {
+                    voteAmount = 2; // Minor tweaks
+                } else {
+                    voteAmount = 1; // Just need small adjustment
+                }
+                console.log(`[STRATEGIC] Bot ${player.name} voting for ${voteAmount} cards (quality: ${quality.toFixed(1)})`);
                 handleVote(voteAmount);
                 break;
             case GamePhase.FINAL_SWAP_DECISION:
-                console.log(`[DEBUG] Bot ${player.name} deciding to participate in final swap`);
-                handleFinalSwapDecision(true); // Bots always participate if they didn't win vote
+                // Strategic final swap: participate if hand quality is poor or vote didn't go our way
+                const finalQuality = evaluateHandQuality(player.hand);
+                const shouldParticipate = finalQuality < 8; // Always participate if hand needs work
+                console.log(`[STRATEGIC] Bot ${player.name} final swap decision, quality: ${finalQuality.toFixed(1)}, participating: ${shouldParticipate}`);
+                handleFinalSwapDecision(shouldParticipate);
                 break;
             default:
                 console.log(`[DEBUG] Bot ${player.name} - no action for phase: ${gameState.gamePhase}`);
@@ -1004,9 +1024,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                     addCommentary(`${botPlayer.name} has no cards to swap.`);
                     return {...prev, players: newPlayers, swapAmount: 0 };
                 }
-                // Ensure we swap at least 1 card, but not more than the hand size
+                // Strategic bot card selection for initial swap
                 const swapCount = Math.min(Math.max(1, hand.length), 2);
-                const cardsToSwap = hand.slice(0, swapCount);
+                const cardsToSwap = selectWorstCardsForSwap(hand, swapCount);
                 console.log(`[DEBUG] Bot ${botPlayer.name} swapping ${cardsToSwap.length} cards, setting swapAmount to ${cardsToSwap.length}`);
                 addCommentary(`${botPlayer.name} swaps ${cardsToSwap.length} cards.`);
                 setSwappingCards({ playerId: botPlayer.id, cards: cardsToSwap, originalPhase: GamePhase.FIRST_SWAP_ACTION });
@@ -1383,7 +1403,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       // Basic validation
       const isValidPlay = validatePlay(selectedCards);
       if(!isValidPlay) {
-        const leadHand = gameState.lastPlayedHand;
+        const leadHand = getCommanderCards(); // Use commander's cards for error messages
         if (leadHand.length > 0 && selectedCards.length > 0) {
           const canBeatLead = selectedCards[0].value >= leadHand[0].value;
           if (!canBeatLead) {
@@ -1424,15 +1444,16 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       }
       
       let newRoundWinnerId = gameState.roundWinnerId;
-      const isWinningPlay = gameState.lastPlayedHand.length === 0 || selectedCards[0].value >= gameState.lastPlayedHand[0].value;
+      const commanderCards = getCommanderCards();
+      const isWinningPlay = commanderCards.length === 0 || selectedCards[0].value >= commanderCards[0].value;
       if (isWinningPlay) {
           newRoundWinnerId = player.id;
       }
       
-      // Add commentary indicating if it's a sacrifice
-      const isSacrifice = gameState.lastPlayedHand.length > 0 && selectedCards[0].value < gameState.lastPlayedHand[0].value;
+      // Add commentary indicating if it's a sacrifice (compared to commander's cards)
+      const isSacrifice = commanderCards.length > 0 && selectedCards[0].value < commanderCards[0].value;
       if (isSacrifice) {
-          addCommentary(`${player.name} sacrifices ${selectedCards.map(c => `${c.rank}${c.suit}`).join(', ')} (cannot beat ${gameState.lastPlayedHand[0].rank}${gameState.lastPlayedHand[0].suit}).`);
+          addCommentary(`${player.name} sacrifices ${selectedCards.map(c => `${c.rank}${c.suit}`).join(', ')} (cannot beat ${commanderCards[0].rank}${commanderCards[0].suit}).`);
       } else {
           addCommentary(`${player.name} plays ${selectedCards.map(c => `${c.rank}${c.suit}`).join(', ')}.`);
       }
@@ -1440,10 +1461,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       const nextPlayerIndex = (playerIndex + 1) % newPlayers.length;
 
       // Update state immediately to trigger animation
+      console.log(`[ROUND DEBUG] nextPlayerIndex: ${nextPlayerIndex}, roundLeaderIndex: ${gameState.roundLeaderIndex}, players in trick: ${newCurrentTrick.length}`);
       if (nextPlayerIndex === gameState.roundLeaderIndex) {
           // Round is over - determine winner and set up for next round
+          console.log(`[ROUND DEBUG] Round ending! Determining winner...`);
           const roundLeaderId = gameState.players[gameState.roundLeaderIndex].id;
           const winnerId = determineTrickWinner(newCurrentTrick, isWinningPlay ? selectedCards : gameState.lastPlayedHand, roundLeaderId);
+          console.log(`[ROUND DEBUG] Round winner: ${winnerId}`);
           
           setGameState(prev => ({
               ...prev, 
@@ -1475,7 +1499,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     const player = gameState.players[playerIndex];
     const hand = [...player.hand];
     
-    const cardsToPlay = findBestPlayForBot(hand, gameState.lastPlayedHand);
+    // Use commander cards for consistent rule following
+    const leadHand = getCommanderCards();
+    const cardsToPlay = findBestPlayForBot(hand, leadHand);
     
     // Ensure cardsToPlay is always an array
     if (!cardsToPlay || cardsToPlay.length === 0) {
@@ -1518,10 +1544,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         console.log(`[DEBUG] Bot ${botPlayer.name} played. Next player index: ${nextPlayerIndex}, Round leader index: ${gameState.roundLeaderIndex}, Players: ${newPlayers.map(p => p.name).join(', ')}`);
 
         // Update state immediately to trigger animation
+        console.log(`[BOT ROUND DEBUG] nextPlayerIndex: ${nextPlayerIndex}, roundLeaderIndex: ${gameState.roundLeaderIndex}, players in trick: ${newCurrentTrick.length}`);
         if (nextPlayerIndex === gameState.roundLeaderIndex) {
             // Round is over - determine winner and set up for next round
+            console.log(`[BOT ROUND DEBUG] Round ending! Determining winner...`);
             const roundLeaderId = gameState.players[gameState.roundLeaderIndex].id;
             const winnerId = determineTrickWinner(newCurrentTrick, isWinningPlay ? cardsToPlay : gameState.lastPlayedHand, roundLeaderId);
+            console.log(`[BOT ROUND DEBUG] Round winner: ${winnerId}`);
             
             setGameState(prev => ({
               ...prev,
@@ -1549,9 +1578,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     }, 1000);
   }
 
+  // Helper function to get the commander's cards (original lead cards) from current trick
+  const getCommanderCards = (): Card[] => {
+    if (gameState.currentTrick.length === 0) {
+      return []; // No trick in progress, so no commander cards yet
+    }
+    // The first play in the current trick are the commander's cards
+    return gameState.currentTrick[0].cards;
+  };
+
   const validatePlay = (cards: Card[]): boolean => {
     const player = gameState.players[gameState.currentPlayerIndex];
-    const leadHand = gameState.lastPlayedHand;
+    const leadHand = getCommanderCards(); // Use commander's cards, not most recent cards
 
     console.log(`[VALIDATION] Player: ${player.name}`);
     console.log(`[VALIDATION] Lead Hand:`, leadHand.map(c => c.rank));
@@ -1611,15 +1649,27 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     }
     
     if (canBeatOrMatch) {
-        // Additional validation for "beat and sacrifice" rule
+        // Check if all played cards can beat the lead (normal beating play)
+        const allCardsBeatLead = cards.every(c => c.value >= leadHand[0].value);
+        
+        if (allCardsBeatLead) {
+            console.log("[VALIDATION] PASSED: All played cards beat or match the lead.");
+            return true;
+        }
+        
+        // Only apply "beat and sacrifice" rule if player has higher cards but can't make a valid set
         if (canBeatAndSacrifice && !winningPlays.length) {
             // Player must play a higher card + lowest cards to match count
             const hasHigherCard = cards.some(c => c.value > leadHand[0].value);
             const sortedHand = [...player.hand].sort((a,b) => a.value - b.value);
             const lowestCards = sortedHand.slice(0, leadHand.length - 1); // -1 because one card is the higher card
-            const hasLowestCards = cards.filter(c => c.value <= leadHand[0].value).every(card => 
-                lowestCards.some(lowest => lowest.rank === card.rank && lowest.suit === card.suit)
-            );
+            
+            // Fixed: Allow any cards with the same VALUES as the lowest cards, not exact matches
+            const lowestValues = lowestCards.map(c => c.value);
+            const sacrificeCards = cards.filter(c => c.value <= leadHand[0].value);
+            const hasLowestCards = sacrificeCards.every(card => lowestValues.includes(card.value));
+            
+            console.log(`[VALIDATION] Beat & sacrifice - lowest values required: [${lowestValues.join(', ')}], sacrifice cards played: [${sacrificeCards.map(c => c.value).join(', ')}]`);
             
             if (hasHigherCard && hasLowestCards) {
                 console.log("[VALIDATION] PASSED: Valid 'beat and sacrifice' play.");
@@ -1676,15 +1726,81 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     console.log("[VALIDATION] Player must sacrifice lowest cards.");
     const sortedHand = [...player.hand].sort((a,b) => a.value - b.value);
     const lowestCards = sortedHand.slice(0, leadHand.length);
-    const isLowestCards = cards.every(card => 
-        lowestCards.some(lowest => lowest.rank === card.rank && lowest.suit === card.suit)
-    );
+    
+    // Fixed: Allow any cards with the same VALUES as the lowest cards, not exact matches
+    const lowestValues = lowestCards.map(c => c.value);
+    const isLowestCards = cards.every(card => lowestValues.includes(card.value));
+    
+    console.log(`[VALIDATION] Lowest values required: [${lowestValues.join(', ')}], played values: [${cards.map(c => c.value).join(', ')}]`);
     
     if (!isLowestCards) console.log("[VALIDATION] FAILED: Did not play lowest cards for sacrifice.");
     else console.log("[VALIDATION] PASSED: Correctly sacrificed lowest cards.");
     return isLowestCards;
   }
   
+  // Helper function to evaluate hand quality for strategic bot decisions
+  const evaluateHandQuality = (hand: Card[]): number => {
+    if (!hand || hand.length === 0) return 0;
+    
+    // Count pairs, triples, quads (key for Gurch)
+    const rankCounts: {[key: string]: number} = {};
+    hand.forEach(card => {
+      rankCounts[card.rank] = (rankCounts[card.rank] || 0) + 1;
+    });
+    
+    let score = 0;
+    const counts = Object.values(rankCounts);
+    
+    // High value for multiple cards of same rank (key for winning rounds)
+    counts.forEach(count => {
+      if (count >= 2) score += count * 3; // Pairs/sets are very valuable
+    });
+    
+    // Bonus for having low cards (good for going out)
+    const lowCards = hand.filter(c => c.value <= 5).length;
+    score += lowCards * 2;
+    
+    // Bonus for having high cards (good for winning rounds)
+    const highCards = hand.filter(c => c.value >= 11).length;
+    score += highCards * 1.5;
+    
+    // Penalty for scattered ranks (hard to make sets)
+    const uniqueRanks = Object.keys(rankCounts).length;
+    if (uniqueRanks === hand.length) score -= 3; // All different ranks
+    
+    return score;
+  };
+
+  // Strategic function to select worst cards for swapping
+  const selectWorstCardsForSwap = (hand: Card[], count: number): Card[] => {
+    if (!hand || hand.length === 0 || count <= 0) return [];
+    
+    // Score each card based on how much it contributes to hand quality
+    const cardScores = hand.map(card => {
+      // Simulate removing this card and see impact on hand quality
+      const remainingHand = hand.filter(c => c.rank !== card.rank || c.suit !== card.suit);
+      const qualityAfterRemoval = evaluateHandQuality(remainingHand);
+      
+      // Factor in isolation (cards without pairs are better to discard)
+      const hasMatching = hand.filter(c => c.rank === card.rank).length > 1;
+      const isolationBonus = hasMatching ? 0 : 3; // Bonus for discarding isolated cards
+      
+      // High cards are sometimes good to keep (for winning) but also risky
+      const valueConsideration = card.value > 10 ? -1 : 1; // Slight preference to keep high cards
+      
+      return {
+        card,
+        discardScore: qualityAfterRemoval + isolationBonus + valueConsideration
+      };
+    });
+    
+    // Sort by discard score (higher score = better to discard)
+    cardScores.sort((a, b) => b.discardScore - a.discardScore);
+    
+    // Return the worst cards up to the count needed
+    return cardScores.slice(0, Math.min(count, cardScores.length)).map(item => item.card);
+  };
+
   const findBestPlayForBot = (hand: Card[], leadHand: Card[]): Card[] => {
     // Safety check: ensure we have cards to play
     if (!hand || hand.length === 0) {
@@ -1726,14 +1842,29 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         beatAndSacrificePlay = [lowestBeatingCard, ...lowestCards];
     }
     
-    // Bot Strategy:
-    // 1. If winning sets are available, play the lowest-value one.
+    // ENHANCED Bot Strategy:
+    // 1. If winning sets are available, play strategically
     // EXCEPTION: If bot has only one card left, play it immediately to go out!
     if (winningPlays.length > 0) {
         if (hand.length === 1) {
             // Bot has only one card - play it to go out immediately!
             return hand;
         }
+        
+        // Strategic choice: if multiple winning options, consider which preserves better hand
+        if (winningPlays.length > 1) {
+            // Prefer plays that keep pairs/sets in hand for future rounds
+            winningPlays.sort((a, b) => {
+                const remainingAfterA = hand.filter(c => !a.some(ac => ac.rank === c.rank && ac.suit === c.suit));
+                const remainingAfterB = hand.filter(c => !b.some(bc => bc.rank === c.rank && bc.suit === c.suit));
+                const qualityAfterA = evaluateHandQuality(remainingAfterA);
+                const qualityAfterB = evaluateHandQuality(remainingAfterB);
+                return qualityAfterB - qualityAfterA; // Prefer play that leaves better hand
+            });
+            return winningPlays[0];
+        }
+        
+        // Single winning option - play it
         winningPlays.sort((a,b) => a[0].value - b[0].value);
         return winningPlays[0];
     }
@@ -1765,10 +1896,31 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
 
   const handleBotSelectCardForOneSwap = () => {
     const player = gameState.players[gameState.currentPlayerIndex];
-    const hand = [...player.hand].sort((a,b) => a.value - b.value);
-    const cardToSwap = hand[hand.length - 1]; // Bot selects its highest card
-    addCommentary(`${player.name} decides to swap their ${cardToSwap.rank}.`);
-    handleSelectCardForOneSwap(cardToSwap);
+    const hand = player.hand;
+    
+    // Strategic card selection: find the card that least contributes to hand quality
+    let worstCard = hand[0];
+    let worstScore = Infinity;
+    
+    hand.forEach(card => {
+      // Simulate removing this card and see how it affects hand quality
+      const remainingHand = hand.filter(c => c.rank !== card.rank || c.suit !== card.suit);
+      const qualityAfterRemoval = evaluateHandQuality(remainingHand);
+      
+      // Also consider if this card is isolated (no pairs)
+      const hasMatching = hand.filter(c => c.rank === card.rank).length > 1;
+      const isolationPenalty = hasMatching ? 0 : 2; // Prefer removing isolated cards
+      
+      const score = qualityAfterRemoval - isolationPenalty;
+      
+      if (score > worstScore || (score === worstScore && card.value > worstCard.value)) {
+        worstScore = score;
+        worstCard = card;
+      }
+    });
+    
+    addCommentary(`${player.name} strategically swaps their ${worstCard.rank}.`);
+    handleSelectCardForOneSwap(worstCard);
   };
 
   const handleBotOneCardSwapDecision = () => {
@@ -1883,34 +2035,51 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       // Get winner position for stick animation
       setGameState(prev => {
           const winnerIndex = prev.players.findIndex(p => p.id === winnerId);
+          console.log(`[STICK] Winner ID: ${winnerId}, Winner Index: ${winnerIndex}`);
           if (winnerIndex !== -1) {
               const winnerPosition = playerPositions[winnerIndex];
+              console.log(`[STICK] Winner Position:`, winnerPosition);
               if (winnerPosition) {
                   // Calculate stick destination based on player position
                   let stickX = window.innerWidth / 2;
                   let stickY = window.innerHeight / 2;
                   
-                  if (winnerPosition.class.includes('top')) {
-                      stickX = window.innerWidth / 2;
-                      stickY = 100;
-                  } else if (winnerPosition.class.includes('left')) {
-                      stickX = 120;
-                      stickY = window.innerHeight / 2;
-                  } else if (winnerPosition.class.includes('right')) {
-                      stickX = window.innerWidth - 120;
-                      stickY = window.innerHeight / 2;
-                  } else if (winnerPosition.class.includes('bottom')) {
-                      stickX = window.innerWidth / 2;
-                      stickY = window.innerHeight - 200;
+                  // Position stick close to actual player positions
+                  const centerX = window.innerWidth / 2;
+                  const centerY = window.innerHeight / 2;
+                  
+                  if (winnerPosition.class.includes('top-')) {
+                      stickX = centerX;
+                      stickY = centerY - 200; // Above center, closer to top players
+                      console.log(`[STICK] Top position: ${stickX}, ${stickY}`);
+                  } else if (winnerPosition.class.includes('left-')) {
+                      stickX = 150; // Much closer to left edge where Bot 2 actually is
+                      stickY = centerY - 50; // Slightly above center
+                      console.log(`[STICK] Left position: ${stickX}, ${stickY}`);
+                  } else if (winnerPosition.class.includes('right-')) {
+                      stickX = centerX + 200; // Right of center (revert to working version)
+                      stickY = centerY;
+                      console.log(`[STICK] Right position: ${stickX}, ${stickY}`);
+                  } else if (winnerPosition.class.includes('bottom-')) {
+                      stickX = centerX;
+                      stickY = centerY + 200; // Below center, closer to human player
+                      console.log(`[STICK] Bottom position: ${stickX}, ${stickY}`);
+                  } else {
+                      console.log(`[STICK] No matching position class: ${winnerPosition.class}`);
                   }
                   
+                  console.log(`[STICK] Final position: ${stickX}, ${stickY}`);
                   // Animate stick to winner
                   setStickPosition({ x: stickX, y: stickY });
                   setStickAnimating(true);
                   
                   // Stop stick animation after 2 seconds
                   setTimeout(() => setStickAnimating(false), 2000);
+              } else {
+                  console.log(`[STICK] No position found for winner index ${winnerIndex}`);
               }
+          } else {
+              console.log(`[STICK] Winner not found in players list`);
           }
           
           return prev;
@@ -2162,7 +2331,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       if (isTurn && isActionPhase) {
         const humanPlayer = gameState.players.find(p => p.isHuman);
         if (!humanPlayer) return prev;
-        const leadHand = gameState.lastPlayedHand;
+        const leadHand = getCommanderCards(); // Use commander's cards, not most recent cards
 
         if (leadHand.length > 0) { // Player is following
             const newSelection = [...prev, card];
@@ -2538,13 +2707,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             const position = playerPositions[playerIndex];
             if (position) {
               // Determine position based on the player's seat position
-              if (position.class.includes('top')) {
+              if (position.class.includes('top-')) {
                 // Top player - cards in upper center of table
                 cardAreaClass += " top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
-              } else if (position.class.includes('left')) {
+              } else if (position.class.includes('left-')) {
                 // Left player - cards in left center of table
                 cardAreaClass += " left-1/4 top-1/2 transform -translate-x-1/2 -translate-y-1/2";
-              } else if (position.class.includes('right')) {
+              } else if (position.class.includes('right-')) {
                 // Right player - cards in right center of table
                 cardAreaClass += " right-1/4 top-1/2 transform translate-x-1/2 -translate-y-1/2";
               } else {
@@ -2558,6 +2727,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             <div key={`played-cards-${player.id}`} className={cardAreaClass} style={cardAreaStyle}>
               {player.playedCards.map((card, cardIndex) => {
                 const isNewlyPlayed = cardIndex >= (lastPlayedCardsCount[player.id] || 0);
+                // Check if this card is a commander card (belongs to the first player in current trick)
+                const isCommanderCard = gameState.currentTrick.length > 0 && 
+                                       gameState.currentTrick[0].playerId === player.id &&
+                                       gameState.currentTrick[0].cards.some(c => c.rank === card.rank && c.suit === card.suit);
                 return (
                   <div 
                     key={`${player.id}-${card.rank}-${card.suit}-${cardIndex}`}
@@ -2572,7 +2745,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                       } : {})
                     }}
                   >
-                    <CardComponent card={card} humanPlayer={true} />
+                    <CardComponent card={card} humanPlayer={true} isCommander={isCommanderCard} />
                   </div>
                 );
               })}
@@ -2639,11 +2812,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         let dealingAreaClass = "absolute flex justify-center items-center space-x-1 z-50";
         
         // Position dealing cards outside each bot's player box
-        if (position.class.includes('top')) {
+        if (position.class.includes('top-')) {
           dealingAreaClass += " top-40 left-1/2 transform -translate-x-1/2";
-        } else if (position.class.includes('left')) {
+        } else if (position.class.includes('left-')) {
           dealingAreaClass += " left-60 top-1/2 transform -translate-y-1/2";
-        } else if (position.class.includes('right')) {
+        } else if (position.class.includes('right-')) {
           dealingAreaClass += " right-60 top-1/2 transform -translate-y-1/2";
         }
 

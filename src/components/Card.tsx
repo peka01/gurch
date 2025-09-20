@@ -10,9 +10,10 @@ interface CardProps {
   small?: boolean;
   faceDown?: boolean;
   humanPlayer?: boolean;
+  isCommander?: boolean; // Highlight commander cards that need to be beaten
 }
 
-const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, isPlayable = true, faceDown = false, humanPlayer = false }) => {
+const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, isPlayable = true, faceDown = false, humanPlayer = false, isCommander = false }) => {
   const isRed = card.suit === '♥' || card.suit === '♦';
   const colorClass = isRed ? 'text-red-500' : 'text-black';
   // Responsive sizing: larger cards with properly proportioned symbols
@@ -104,14 +105,18 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
   return (
     <div
       className={`card-component relative ${sizeClass} bg-white rounded-lg shadow-md flex flex-col justify-between p-1 transition-all duration-200 ease-in-out ${colorClass} ${
+        isCommander ? 'ring-2 ring-yellow-400 bg-yellow-50 border-yellow-400' : ''
+      } ${
         isSelected ? 'transform -translate-y-2 sm:-translate-y-4 ring-2 sm:ring-4 ring-cyan-400 shadow-2xl' : ''
       } ${onClick && isPlayable ? 'cursor-pointer hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-lg active:scale-95' : ''} ${
         !isPlayable ? 'opacity-60 cursor-not-allowed' : ''
       } touch-manipulation`}
       style={{
-        backgroundColor: '#ffffff', // Force white background
-        border: '1px solid #e5e7eb', // Light gray border for definition
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' // Ensure shadow visibility
+        backgroundColor: isCommander ? '#fefce8' : '#ffffff', // Yellow bg for commander cards
+        border: isCommander ? '2px solid #facc15' : '1px solid #e5e7eb', // Yellow border for commander cards
+        boxShadow: isCommander 
+          ? '0 0 0 2px #fde047, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' 
+          : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
       }}
       onClick={handleClick}
       title={`${card.rank} of ${card.suit} (Value: ${card.value})`}
