@@ -1739,7 +1739,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     
     // Bot Strategy:
     // 1. If winning sets are available, play the lowest-value one.
+    // EXCEPTION: If bot has only one card left, play it immediately to go out!
     if (winningPlays.length > 0) {
+        if (hand.length === 1) {
+            // Bot has only one card - play it to go out immediately!
+            return hand;
+        }
         winningPlays.sort((a,b) => a[0].value - b[0].value);
         return winningPlays[0];
     }
@@ -1750,6 +1755,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     }
 
     // 3. Otherwise, sacrifice the lowest cards.
+    // EXCEPTION: If bot has only one card left, play it immediately to go out!
+    if (hand.length === 1) {
+        // Bot has only one card - play it to go out immediately!
+        return hand;
+    }
+    
     const sortedHand = [...hand].sort((a,b) => a.value - b.value);
     const cardsToReturn = sortedHand.slice(0, leadCount);
     
