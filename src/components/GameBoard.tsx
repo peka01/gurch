@@ -1614,10 +1614,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     
     console.log(`[VALIDATION] Highest played card: ${highestPlayedCard}, Highest lead card: ${highestLeadCard}, Can beat or match: ${canBeatOrMatch}`);
     
-    // ALWAYS allow equal-value plays (same rank as lead)
-    const isEqualPlay = cards[0].value === leadHand[0].value && cards.every(c => c.rank === cards[0].rank);
+    // ALWAYS allow equal-value plays (same value as lead)
+    const isEqualPlay = cards[0].value === leadHand[0].value && cards.every(c => c.value === cards[0].value);
     if (isEqualPlay) {
-        console.log("[VALIDATION] PASSED: Valid equal-value play (same rank as lead).");
+        console.log("[VALIDATION] PASSED: Valid equal-value play (same value as lead).");
         return true;
     }
     
