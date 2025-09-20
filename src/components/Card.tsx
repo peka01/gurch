@@ -28,6 +28,12 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
         } ${onClick && isPlayable ? 'cursor-pointer hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-lg active:scale-95' : ''} ${
           !isPlayable ? 'opacity-60 cursor-not-allowed' : ''
         } touch-manipulation`}
+        style={{
+          background: 'linear-gradient(to bottom right, #2563eb, #1e40af)', // Force blue gradient
+          backgroundColor: '#2563eb', // Fallback blue
+          border: '1px solid #1e40af', // Dark blue border
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' // Ensure shadow visibility
+        }}
         onClick={onClick && isPlayable ? onClick : undefined}
         title="Face down card"
       >
@@ -80,6 +86,11 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
       } ${onClick && isPlayable ? 'cursor-pointer hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-lg active:scale-95' : ''} ${
         !isPlayable ? 'opacity-60 cursor-not-allowed' : ''
       } touch-manipulation`}
+      style={{
+        backgroundColor: '#ffffff', // Force white background
+        border: '1px solid #e5e7eb', // Light gray border for definition
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' // Ensure shadow visibility
+      }}
       onClick={handleClick}
       title={`${card.rank} of ${card.suit} (Value: ${card.value})`}
     >

@@ -5,9 +5,9 @@ import PlayerDisplay from './PlayerDisplay';
 import CardComponent from './Card';
 import ActionPanel from './ActionPanel';
 import GameOverModal from './GameOverModal';
-import TrickArea from './TrickArea';
 import FloatingPlayButton from './FloatingPlayButton';
 import DraggableCommentary from './DraggableCommentary';
+import Stick from './Stick';
 
 interface GameBoardProps {
   players: Player[];
@@ -77,6 +77,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [showFloatingPlayButton, setShowFloatingPlayButton] = useState<boolean>(false);
   const [buttonPosition, setButtonPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [lastPlayedCardsCount, setLastPlayedCardsCount] = useState<{ [playerId: string]: number }>({});
+  const [stickPosition, setStickPosition] = useState<{ x: number; y: number }>({ 
+    x: typeof window !== 'undefined' ? window.innerWidth / 2 : 400, 
+    y: typeof window !== 'undefined' ? window.innerHeight / 2 : 300 
+  });
+  const [stickAnimating, setStickAnimating] = useState<boolean>(false);
+  const [showCardClearAnimation, setShowCardClearAnimation] = useState<boolean>(false);
   const hasDealt = React.useRef(false);
   const processedDecisions = useRef<Set<string>>(new Set());
   const lastCardClick = useRef<{card: string, timestamp: number} | null>(null);
@@ -1420,6 +1427,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       const newPlayers = [...gameState.players];
       const player = newPlayers[playerIndex];
       player.hand = player.hand.filter(c => !selectedCards.some(sc => sc.rank === c.rank && sc.suit === c.suit));
+      
+      // Update last played cards count for animation
+      setLastPlayedCardsCount(prev => ({
+        ...prev,
+        [player.id]: player.playedCards.length
+      }));
+      
       player.playedCards.push(...selectedCards);
 
       const newTrickPlay: TrickPlay = {
@@ -1890,48 +1904,101 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
   };
 
   const startNextRound = (winnerId: string) => {
-      // Use the current state to check player hands
+      // Start card clearing animation
+      setShowCardClearAnimation(true);
+      
+      // Get winner position for stick animation
       setGameState(prev => {
-          // Check if any players still have cards
-          const playersWithCards = prev.players.filter(p => p.hand.length > 0);
-          
-          console.log(`[DEBUG] startNextRound: Players with cards: ${playersWithCards.map(p => `${p.name}(${p.hand.length})`).join(', ')}`);
-          
-          if (playersWithCards.length === 0) {
-              // No players have cards left, game is over
-              handleGameOver(winnerId);
-              return prev;
-          }
-          
-          if (playersWithCards.length === 1) {
-              // Only one player has cards left, they win
-              const winner = playersWithCards[0];
-              addCommentary(`${winner.name} wins! All other players are out of cards.`);
-              handleGameOver(winner.id);
-              return prev;
-          }
-
           const winnerIndex = prev.players.findIndex(p => p.id === winnerId);
-          const nextLeaderIndex = winnerIndex !== -1 ? winnerIndex : prev.roundLeaderIndex;
-
-          addCommentary(`${prev.players[nextLeaderIndex].name} won the last round and will start.`);
+          if (winnerIndex !== -1) {
+              const winnerPosition = playerPositions[winnerIndex];
+              if (winnerPosition) {
+                  // Calculate stick destination based on player position
+                  let stickX = window.innerWidth / 2;
+                  let stickY = window.innerHeight / 2;
+                  
+                  if (winnerPosition.class.includes('top')) {
+                      stickX = window.innerWidth / 2;
+                      stickY = 100;
+                  } else if (winnerPosition.class.includes('left')) {
+                      stickX = 120;
+                      stickY = window.innerHeight / 2;
+                  } else if (winnerPosition.class.includes('right')) {
+                      stickX = window.innerWidth - 120;
+                      stickY = window.innerHeight / 2;
+                  } else if (winnerPosition.class.includes('bottom')) {
+                      stickX = window.innerWidth / 2;
+                      stickY = window.innerHeight - 200;
+                  }
+                  
+                  // Animate stick to winner
+                  setStickPosition({ x: stickX, y: stickY });
+                  setStickAnimating(true);
+                  
+                  // Stop stick animation after 2 seconds
+                  setTimeout(() => setStickAnimating(false), 2000);
+              }
+          }
           
-          // Clear processed decisions for the new round
-          processedDecisions.current.clear();
-          console.log(`[DEBUG] Starting new round, cleared processed decisions. Winner: ${prev.players[nextLeaderIndex].name}`);
-          
-          return {
-              ...prev,
-              gamePhase: GamePhase.GAMEPLAY,
-              currentPlayerIndex: nextLeaderIndex,
-              roundLeaderIndex: nextLeaderIndex,
-              cardsOnTable: [],
-              lastPlayedHand: [],
-              currentTrick: [],
-              lastRoundWinnerId: winnerId,
-              roundWinnerId: undefined
-          };
+          return prev;
       });
+      
+      // Clear cards after animation and proceed with round logic
+      setTimeout(() => {
+          setShowCardClearAnimation(false);
+          
+          setGameState(prev => {
+              // Check if any players still have cards
+              const playersWithCards = prev.players.filter(p => p.hand.length > 0);
+              
+              console.log(`[DEBUG] startNextRound: Players with cards: ${playersWithCards.map(p => `${p.name}(${p.hand.length})`).join(', ')}`);
+              
+              if (playersWithCards.length === 0) {
+                  // No players have cards left, game is over
+                  handleGameOver(winnerId);
+                  return prev;
+              }
+              
+              if (playersWithCards.length === 1) {
+                  // Only one player has cards left, they win
+                  const winner = playersWithCards[0];
+                  addCommentary(`${winner.name} wins! All other players are out of cards.`);
+                  handleGameOver(winner.id);
+                  return prev;
+              }
+
+              const winnerIndex = prev.players.findIndex(p => p.id === winnerId);
+              const nextLeaderIndex = winnerIndex !== -1 ? winnerIndex : prev.roundLeaderIndex;
+
+              addCommentary(`${prev.players[nextLeaderIndex].name} won the last round and will start.`);
+              
+              // Clear processed decisions for the new round
+              processedDecisions.current.clear();
+              console.log(`[DEBUG] Starting new round, cleared processed decisions. Winner: ${prev.players[nextLeaderIndex].name}`);
+              
+              // Clear all played cards and reset for next round
+              const playersWithClearedCards = prev.players.map(player => ({
+                  ...player,
+                  playedCards: [] // Clear all played cards
+              }));
+              
+              return {
+                  ...prev,
+                  players: playersWithClearedCards,
+                  gamePhase: GamePhase.GAMEPLAY,
+                  currentPlayerIndex: nextLeaderIndex,
+                  roundLeaderIndex: nextLeaderIndex,
+                  cardsOnTable: [],
+                  lastPlayedHand: [],
+                  currentTrick: [],
+                  lastRoundWinnerId: winnerId,
+                  roundWinnerId: undefined
+              };
+          });
+          
+          // Reset last played cards count for animations
+          setLastPlayedCardsCount({});
+      }, 1500); // Cards clear after 1.5 seconds
   }
 
   const handleGameOver = (playerWhoWentOutId: string) => {
@@ -2188,7 +2255,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     const positions = [
       { class: 'top-2 sm:top-4', style: { left: '50%', transform: 'translateX(-50%)' } }, // Top
       { class: 'right-2 sm:right-4', style: { top: '50%', right: '10px', transform: 'translateY(-50%)' } }, // Right - fixed positioning
-      { class: 'bottom-20 sm:bottom-32', style: { left: '50%', transform: 'translateX(-50%)' } }, // Bottom (Human) - use inline CSS
+      { class: 'bottom-2 sm:bottom-4', style: { left: '50%', transform: 'translateX(-50%)' } }, // Bottom (Human) - closer to cards
       { class: 'left-2 sm:left-4', style: { top: '50%', left: '10px', transform: 'translateY(-50%)' } } // Left - fixed positioning
     ];
     const humanIndex = gameState.players.findIndex(p => p.isHuman);
@@ -2394,44 +2461,64 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
 
   return (
     <div className="relative w-full h-screen bg-gradient-to-br from-emerald-900 via-green-800 to-emerald-900 overflow-hidden">
-      {/* Casino Background Pattern */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="w-full h-full" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M50 50c0-27.614-22.386-50-50-50v100c27.614 0 50-22.386 50-50z'/%3E%3Cpath d='M50 50c0 27.614 22.386 50 50 50V0c-27.614 0-50 22.386-50 50z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }} />
-      </div>
-
       {/* Poker Table Surface */}
-      <div className="absolute inset-0 flex items-center justify-center">
+      <div className="absolute inset-0 flex items-center justify-center z-10">
         <div className="relative w-4/5 h-4/5 max-w-6xl max-h-5xl">
-          {/* Main Table */}
-          <div className="absolute inset-0 bg-gradient-to-br from-green-700 to-green-800 rounded-full shadow-2xl border-4 sm:border-8 border-amber-600">
-            {/* Table Felt Pattern */}
-            <div className="absolute inset-2 sm:inset-4 rounded-full bg-gradient-to-br from-green-600 to-green-700 opacity-90">
-              <div className="absolute inset-0 rounded-full" style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M20 20c0-11.046-8.954-20-20-20v40c11.046 0 20-8.954 20-20z'/%3E%3Cpath d='M20 20c0 11.046 8.954 20 20 20V0c-11.046 0-20 8.954-20 20z'/%3E%3C/g%3E%3C/svg%3E")`,
-              }} />
-            </div>
-            
-            {/* Table Border Details */}
-            <div className="absolute inset-1 sm:inset-2 rounded-full border-2 sm:border-4 border-amber-500 opacity-60"></div>
-            <div className="absolute inset-3 sm:inset-6 rounded-full border-1 sm:border-2 border-amber-400 opacity-40"></div>
+          {/* Professional Card Table */}
+          <div 
+            className="absolute inset-0 rounded-full shadow-2xl border-4 sm:border-8 border-amber-600"
+            style={{
+              background: 'radial-gradient(ellipse at center, #22c55e 0%, #16a34a 50%, #15803d  100%)',
+              backgroundColor: '#16a34a',
+              boxShadow: 'inset 0 0 50px rgba(0,0,0,0.2), 0 8px 32px rgba(0,0,0,0.3)'
+            }}
+          >
+            {/* Table Cloth Texture */}
+            <div 
+              className="absolute inset-0 rounded-full opacity-30"
+              style={{
+                background: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3Ccircle cx='15' cy='15' r='1'/%3E%3Ccircle cx='45' cy='15' r='1'/%3E%3Ccircle cx='15' cy='45' r='1'/%3E%3Ccircle cx='45' cy='45' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                backgroundSize: '60px 60px'
+              }}
+            />
           </div>
         </div>
       </div>
       
-      {/* Dealer Position */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30">
-        <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-full p-2 sm:p-4 shadow-2xl border-2 sm:border-4 border-amber-400">
-          <div className="w-10 h-10 sm:w-16 sm:h-16 bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center text-lg sm:text-2xl">
-            🎰
-          </div>
-          <div className="text-center mt-1 sm:mt-2">
-            <div className="text-white font-bold text-xs sm:text-sm">DEALER</div>
-            <div className="text-amber-200 text-xs hidden sm:block">GURCH</div>
+        {/* Gurch Crown Logo - Embroidered on Table Cloth */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30">
+          <div className="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center">
+            {/* Font Awesome Crown - Bright Yellow Filled */}
+            <i 
+              className="fas fa-crown text-yellow-400" 
+              style={{ 
+                fontSize: '8rem',
+                textShadow: '0 0 20px rgba(255, 235, 59, 0.9), 0 0 40px rgba(255, 235, 59, 0.6), 0 2px 4px rgba(0,0,0,0.3)',
+                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
+              }}
+            ></i>
+            
+            {/* Half Circle Text Below Crown */}
+            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 320 320">
+              <defs>
+                <path
+                  id="bottom-arc-path"
+                  d="M 40,160 A 120,120 0 0,0 280,160"
+                />
+              </defs>
+              <text className="fill-yellow-400 font-bold" style={{ 
+                fontSize: '1.8rem', // 1.5x larger (1.2rem * 1.5 = 1.8rem)
+                fontFamily: 'serif',
+                textShadow: '0 0 10px rgba(255, 235, 59, 0.8), 0 0 20px rgba(255, 235, 59, 0.5)',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+              }}>
+                <textPath href="#bottom-arc-path" startOffset="50%" textAnchor="middle">
+                  GURCH CARD GAME
+                </textPath>
+              </text>
+            </svg>
           </div>
         </div>
-      </div>
 
       <button onClick={onQuit} className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-red-600 hover:bg-red-500 text-white font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-lg z-50 shadow-lg text-sm sm:text-base">
           Quit
@@ -2440,49 +2527,120 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       {/* Draggable Commentary */}
       <DraggableCommentary commentary={gameState.commentary} />
 
-      {gameState.players.map((player, index) => (
-        !player.isHuman && (
+      {/* Central Table - Played Cards in Specific Areas */}
+      <div className="absolute inset-0 z-40 pointer-events-none">
+        {gameState.players.map((player, playerIndex) => {
+          const isHuman = player.isHuman;
+          
+          // Get position for this player's played cards based on player positions
+          let cardAreaStyle: React.CSSProperties = {};
+          let cardAreaClass = "absolute w-32 h-20 sm:w-40 sm:h-24 flex flex-wrap gap-1 justify-center items-center";
+          
+          // Add clearing animation class
+          if (showCardClearAnimation) {
+            cardAreaClass += " transition-all duration-1000 ease-in-out";
+            cardAreaStyle.opacity = 0;
+            cardAreaStyle.transform = "scale(0.8) translateY(-20px)";
+          }
+          
+          if (isHuman) {
+            // Human player cards appear on the table above their player box
+            cardAreaClass += " bottom-48 sm:bottom-52 left-1/2 transform -translate-x-1/2";
+          } else {
+            // Bot players: Position based on their actual seat position around the table
+            const position = playerPositions[playerIndex];
+            if (position) {
+              // Determine position based on the player's seat position
+              if (position.class.includes('top')) {
+                // Top player - cards in upper center of table
+                cardAreaClass += " top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+              } else if (position.class.includes('left')) {
+                // Left player - cards in left center of table
+                cardAreaClass += " left-1/4 top-1/2 transform -translate-x-1/2 -translate-y-1/2";
+              } else if (position.class.includes('right')) {
+                // Right player - cards in right center of table
+                cardAreaClass += " right-1/4 top-1/2 transform translate-x-1/2 -translate-y-1/2";
+              } else {
+                // Fallback - center table
+                cardAreaClass += " top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+              }
+            }
+          }
+          
+          return (
+            <div key={`played-cards-${player.id}`} className={cardAreaClass} style={cardAreaStyle}>
+              {player.playedCards.map((card, cardIndex) => {
+                const isNewlyPlayed = cardIndex >= (lastPlayedCardsCount[player.id] || 0);
+                return (
+                  <div 
+                    key={`${player.id}-${card.rank}-${card.suit}-${cardIndex}`}
+                    className={isNewlyPlayed ? "animate-toss-from-player" : ""}
+                    style={isNewlyPlayed ? {
+                      animationDelay: `${(cardIndex - (lastPlayedCardsCount[player.id] || 0)) * 0.1}s`,
+                      animationDuration: '0.8s',
+                      animationFillMode: 'forwards'
+                    } : {}}
+                  >
+                    <CardComponent card={card} />
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Stick Component */}
+      <Stick 
+        position={stickPosition} 
+        isAnimating={stickAnimating}
+        className="pointer-events-none"
+      />
+
+      {/* Bot Players */}
+      {gameState.players.filter(player => !player.isHuman).map((player, index) => (
         <PlayerDisplay
           key={player.id}
           player={player}
-          isCurrentPlayer={index === gameState.currentPlayerIndex}
+          isCurrentPlayer={gameState.players.indexOf(player) === gameState.currentPlayerIndex}
           isStarter={player.id === gameState.starterPlayerId}
           isThinking={player.id === gameState.thinkingPlayerId}
-            positionClass={playerPositions[index].class}
-            positionStyle={playerPositions[index].style}
+          positionClass={playerPositions[gameState.players.indexOf(player)].class}
+          positionStyle={playerPositions[gameState.players.indexOf(player)].style}
           faceUpCard={player.faceUpCard}
           gamePhase={gameState.gamePhase}
           swappingCards={swappingCards?.playerId === player.id ? swappingCards.cards : undefined}
           isDealing={isDealing}
           dealingCards={dealingCards[player.id]}
           faceUpDealingCard={faceUpCards[player.id]}
+          lastPlayedCardsCount={lastPlayedCardsCount[player.id] || 0}
         />
-        )
       ))}
       
-
-      {/* Human Player's Hand - Poker Table Position */}
-      <div className="absolute bottom-2 sm:bottom-8" style={{left: '50%', transform: 'translateX(-50%)'}}>
-        {/* Player Seat */}
-        <div className="bg-gradient-to-br from-amber-800 to-amber-900 rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-2xl border-2 sm:border-4 border-amber-400 mb-2 sm:mb-4">
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full border-2 sm:border-4 border-amber-400 overflow-hidden">
-              {gameState.players.find(p => p.isHuman)?.avatar ? (
-                <img src={gameState.players.find(p => p.isHuman)!.avatar} alt="You" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-amber-200 to-amber-300 flex items-center justify-center text-sm sm:text-xl font-bold text-amber-800">
-                  👤
-                </div>
-              )}
-            </div>
-            <div>
-              <p className="text-white font-bold text-sm sm:text-lg">You</p>
-              <p className="text-amber-200 text-xs sm:text-sm">Score: {gameState.players.find(p => p.isHuman)?.score || 0}</p>
-            </div>
-          </div>
+      {/* Human Player - Always at Bottom */}
+      {gameState.players.find(player => player.isHuman) && (
+        <div className="absolute bottom-20 sm:bottom-24 left-1/2 transform -translate-x-1/2 z-10">
+          <PlayerDisplay
+            key={gameState.players.find(player => player.isHuman)!.id}
+            player={gameState.players.find(player => player.isHuman)!}
+            isCurrentPlayer={gameState.players.findIndex(p => p.isHuman) === gameState.currentPlayerIndex}
+            isStarter={gameState.players.find(player => player.isHuman)!.id === gameState.starterPlayerId}
+            isThinking={gameState.players.find(player => player.isHuman)!.id === gameState.thinkingPlayerId}
+            positionClass=""
+            positionStyle={{}}
+            faceUpCard={gameState.players.find(player => player.isHuman)!.faceUpCard}
+            gamePhase={gameState.gamePhase}
+            swappingCards={swappingCards?.playerId === gameState.players.find(player => player.isHuman)!.id ? swappingCards.cards : undefined}
+            isDealing={isDealing}
+            dealingCards={dealingCards[gameState.players.find(player => player.isHuman)!.id]}
+            faceUpDealingCard={faceUpCards[gameState.players.find(player => player.isHuman)!.id]}
+            lastPlayedCardsCount={lastPlayedCardsCount[gameState.players.find(player => player.isHuman)!.id] || 0}
+          />
         </div>
-        
-        {/* Cards Area */}
+      )}
+      
+      {/* Human Player's Hand Cards Only */}
+      <div className="absolute bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-40">
         <div className="flex justify-center items-center space-x-1 sm:space-x-2 bg-black/20 rounded-xl p-2 sm:p-4 backdrop-blur-sm border border-amber-500/30">
         {/* Show visual dealing cards if dealing is in progress */}
         {isDealing ? (
@@ -2527,15 +2685,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       </div>
 
 
-      {/* Trick Area with Animated Cards */}
-      <TrickArea
-        currentTrick={gameState.currentTrick}
-        players={gameState.players}
-        roundWinnerId={gameState.roundWinnerId}
-        isGameplayPhase={gameState.gamePhase === GamePhase.GAMEPLAY}
-        isRoundOver={gameState.gamePhase === GamePhase.ROUND_OVER}
-        currentPlayerId={gameState.players[gameState.currentPlayerIndex]?.id}
-      />
 
       {/* Revealed Card for 1-card swap */}
       {gameState.gamePhase === GamePhase.FINAL_SWAP_ONE_CARD_REVEAL_AND_DECIDE && gameState.revealedCard && (

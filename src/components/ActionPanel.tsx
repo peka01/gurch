@@ -97,6 +97,10 @@ const ActionButton: React.FC<ActionButtonProps> = ({
                     focus:outline-none focus:ring-4 focus:ring-white/30
                     touch-manipulation select-none
                 `}
+                style={{
+                    backgroundColor: disabled ? '#6b7280' : (variant === 'secondary' ? '#d97706' : '#0891b2'), // Fallback colors
+                    backgroundImage: disabled ? 'none' : (variant === 'secondary' ? 'linear-gradient(to bottom right, #d97706, #b45309)' : 'linear-gradient(to bottom right, #0891b2, #0e7490)')
+                }}
                 title={requiresConfirmation ? "Requires confirmation" : undefined}
             >
                 {children}
@@ -420,7 +424,13 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
             }}
             onMouseDown={handleMouseDown}
         >
-            <div className="bg-gradient-to-r from-amber-800/90 to-amber-900/90 backdrop-blur-md border-2 border-amber-400/70 rounded-xl shadow-2xl p-3 sm:p-4 text-center min-w-[280px] sm:min-w-[400px] max-w-[90vw] sm:max-w-[600px]">
+            <div 
+                className="bg-gradient-to-r from-amber-800/90 to-amber-900/90 backdrop-blur-md border-2 border-amber-400/70 rounded-xl shadow-2xl p-3 sm:p-4 text-center min-w-[280px] sm:min-w-[400px] max-w-[90vw] sm:max-w-[600px]"
+                style={{
+                    backgroundColor: 'rgba(146, 64, 14, 0.9)', // Fallback amber-800/90
+                    backgroundImage: 'linear-gradient(to right, rgba(146, 64, 14, 0.9), rgba(120, 53, 15, 0.9))' // Fallback gradient
+                }}
+            >
                 <div className="drag-handle flex items-center justify-center gap-2 sm:gap-3 mb-2 cursor-move">
                     {timer > 0 && (
                         <div className="w-6 h-6 sm:w-8 sm:h-8 bg-red-600 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold border-2 border-white shadow-lg">

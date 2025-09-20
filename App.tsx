@@ -94,6 +94,9 @@ const App: React.FC = () => {
       <header className="w-full text-center mb-2 sm:mb-4 relative z-50">
         <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-cyan-400" style={{ textShadow: '0 0 10px rgba(0, 255, 255, 0.7)'}}>
           <i className="fas fa-crown mr-2 sm:mr-3"></i>Gurch Card Game
+          <span className="ml-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-500 text-white animate-pulse">
+            BETA
+          </span>
         </h1>
       </header>
       <main className="w-full max-w-7xl flex-grow">

@@ -42,6 +42,11 @@ const FloatingPlayButton: React.FC<FloatingPlayButtonProps> = ({
           focus:outline-none focus:ring-4 focus:ring-green-400/30
           backdrop-blur-sm
         `}
+        style={{
+          backgroundColor: disabled ? '#6b7280' : '#059669', // Fallback green-600
+          backgroundImage: disabled ? 'none' : 'linear-gradient(to bottom right, #059669, #047857)', // Fallback gradient
+          border: '2px solid #10b981' // Fallback border
+        }}
       >
         <div className="flex items-center space-x-2">
           <span className="text-lg">🎮</span>

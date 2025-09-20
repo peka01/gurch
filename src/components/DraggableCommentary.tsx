@@ -61,6 +61,8 @@ const DraggableCommentary: React.FC<DraggableCommentaryProps> = ({ commentary })
         isDragging ? 'cursor-grabbing' : 'cursor-grab'
       } ${isMinimized ? 'w-48' : 'w-60'}`}
       style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.8)', // Fallback black/80
+        backdropFilter: 'blur(4px)', // Fallback backdrop blur
         left: position.x,
         top: position.y,
         transform: isDragging ? 'scale(1.02)' : 'scale(1)'
