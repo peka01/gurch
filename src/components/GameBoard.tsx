@@ -2486,7 +2486,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       </div>
       
         {/* Gurch Crown Logo - Embroidered on Table Cloth */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30">
+        <div className="absolute inset-0 flex items-center justify-center z-30">
           <div className="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center">
             {/* Font Awesome Crown - Bright Yellow Filled */}
             <i 
@@ -2494,24 +2494,38 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
               style={{ 
                 fontSize: '8rem',
                 textShadow: '0 0 20px rgba(255, 235, 59, 0.9), 0 0 40px rgba(255, 235, 59, 0.6), 0 2px 4px rgba(0,0,0,0.3)',
-                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
+                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
+                display: 'block',
+                textAlign: 'center',
+                lineHeight: '1'
               }}
             ></i>
             
             {/* Half Circle Text Below Crown */}
-            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 320 320">
+            <svg 
+              className="absolute inset-0 w-full h-full" 
+              viewBox="0 0 320 320"
+              style={{
+                overflow: 'visible'
+              }}
+            >
               <defs>
                 <path
                   id="bottom-arc-path"
                   d="M 40,160 A 120,120 0 0,0 280,160"
                 />
               </defs>
-              <text className="fill-yellow-400 font-bold" style={{ 
-                fontSize: '1.8rem', // 1.5x larger (1.2rem * 1.5 = 1.8rem)
-                fontFamily: 'serif',
-                textShadow: '0 0 10px rgba(255, 235, 59, 0.8), 0 0 20px rgba(255, 235, 59, 0.5)',
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-              }}>
+              <text 
+                className="fill-yellow-400 font-bold" 
+                style={{ 
+                  fontSize: '1.8rem', // 1.5x larger (1.2rem * 1.5 = 1.8rem)
+                  fontFamily: 'serif',
+                  textShadow: '0 0 10px rgba(255, 235, 59, 0.8), 0 0 20px rgba(255, 235, 59, 0.5)',
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                  textAnchor: 'middle',
+                  dominantBaseline: 'central'
+                }}
+              >
                 <textPath href="#bottom-arc-path" startOffset="50%" textAnchor="middle">
                   GURCH CARD GAME
                 </textPath>
