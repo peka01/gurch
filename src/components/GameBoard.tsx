@@ -444,31 +444,35 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             // Check if all players have made their decisions
             const allPlayersDecided = gameState.players.every(p => p.wantsToVote !== undefined || p.hasStoodPat);
             if (allPlayersDecided) {
-                console.log(`[DEBUG] All players have made vote decisions, phase should transition`);
-                // Don't advance players, let handleVoteDecision handle the phase transition
+                console.log(`[DEBUG] All players have made vote decisions, transitioning to next phase`);
+                const playersVoting = gameState.players.filter(p => p.wantsToVote);
+                if (playersVoting.length === 0) {
+                    setGameState(prev => ({
+                        ...prev, 
+                        gamePhase: GamePhase.GAMEPLAY, 
+                        currentPlayerIndex: prev.firstPlayerToAct, 
+                        roundLeaderIndex: prev.firstPlayerToAct 
+                    }));
+                } else {
+                    const firstVoterIndex = gameState.players.findIndex(p => p.wantsToVote);
+                    setGameState(prev => ({
+                        ...prev, 
+                        gamePhase: GamePhase.VOTE_SWAP, 
+                        currentPlayerIndex: firstVoterIndex 
+                    }));
+                }
                 return;
             }
             
-            if (currentPlayer.hasStoodPat) {
-                const nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
-                console.log(`[DEBUG] Player ${currentPlayer.name} has stood pat, advancing to player ${gameState.players[nextPlayerIndex].name}`);
-                setGameState(prev => ({...prev, currentPlayerIndex: nextPlayerIndex}));
-            } else if (currentPlayer.wantsToVote !== undefined) {
-                // Player has already made a vote decision, advance to next player
-                const nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
-                console.log(`[DEBUG] Player ${currentPlayer.name} already voted (${currentPlayer.wantsToVote}), advancing to player ${gameState.players[nextPlayerIndex].name}`);
-                setGameState(prev => ({...prev, currentPlayerIndex: nextPlayerIndex}));
-            } else if (!currentPlayer.isHuman && currentPlayer.wantsToVote === undefined) {
-                console.log(`[DEBUG] Bot ${currentPlayer.name} needs to make vote decision, setting thinking state`);
-                setGameState(prev => ({...prev, thinkingPlayerId: currentPlayer.id }));
-            } else if (currentPlayer.isHuman && currentPlayer.wantsToVote === undefined) {
-                // Human player needs to make a vote decision - wait for their input
-                // But add a timeout fallback
-                console.log(`[DEBUG] Human player ${currentPlayer.name} needs to make vote decision, setting timeout`);
-                timeoutId = setTimeout(() => {
-                    console.log(`[TIMEOUT] Human player ${currentPlayer.name} taking too long to vote, auto-advancing`);
-                    handleVoteDecision(false);
-                }, 10000); // 10 second timeout for human decisions
+            // Only process if current player hasn't made a decision yet
+            if (currentPlayer.wantsToVote === undefined && !currentPlayer.hasStoodPat) {
+                if (!currentPlayer.isHuman) {
+                    console.log(`[DEBUG] Bot ${currentPlayer.name} needs to make vote decision, setting thinking state`);
+                    setGameState(prev => ({...prev, thinkingPlayerId: currentPlayer.id }));
+                } else {
+                    // Human player needs to make a vote decision - wait for their input
+                    console.log(`[DEBUG] Waiting for human player ${currentPlayer.name} to make vote decision`);
+                }
             }
             return;
         case GamePhase.VOTE_SWAP:
@@ -1245,30 +1249,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
               return {...prev, players: newPlayers, gamePhase: GamePhase.VOTE_SWAP, currentPlayerIndex: firstVoterIndex };
           }
 
-          // Find next player to make a decision (only among players who didn't stand pat)
-          let nextPlayerIndex = -1;
-          for (let i = 1; i < newPlayers.length; i++) {
-              const potentialIndex = (playerIndex + i) % newPlayers.length;
-              if (newPlayers[potentialIndex].wantsToVote === undefined && !newPlayers[potentialIndex].hasStoodPat) {
-                  nextPlayerIndex = potentialIndex;
-                  break;
-              }
-          }
-
-          if (nextPlayerIndex === -1) {
-              // This should not happen if allDecided check above works, but as a safety net
-              console.log(`[DEBUG] No next player found, forcing phase transition`);
-              const playersVoting = newPlayers.filter(p => p.wantsToVote);
-              if (playersVoting.length === 0) {
-                  return {...prev, players: newPlayers, gamePhase: GamePhase.GAMEPLAY, currentPlayerIndex: prev.firstPlayerToAct, roundLeaderIndex: prev.firstPlayerToAct };
-              } else {
-                  const firstVoterIndex = newPlayers.findIndex(p => p.wantsToVote);
-                  return {...prev, players: newPlayers, gamePhase: GamePhase.VOTE_SWAP, currentPlayerIndex: firstVoterIndex };
-              }
-          }
-
-          console.log(`[DEBUG] Next player for vote decision: ${newPlayers[nextPlayerIndex].name}`);
-          return {...prev, players: newPlayers, currentPlayerIndex: nextPlayerIndex};
+          // Let the game loop handle advancing to the next player
+          // Don't manually advance here to prevent conflicts
+          console.log(`[DEBUG] Vote decision processed, letting game loop handle next player`);
+          return {...prev, players: newPlayers};
       });
   };
 
