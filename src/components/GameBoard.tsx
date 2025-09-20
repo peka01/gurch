@@ -466,7 +466,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                 const nextPlayerIndex = findNextPlayerForDecision(gameState.players, gameState.currentPlayerIndex, 'vote');
                 if (nextPlayerIndex !== -1) {
                     console.log(`[DEBUG] Current player decided, advancing to ${gameState.players[nextPlayerIndex].name}`);
-                    setGameState(prev => ({...prev, currentPlayerIndex: nextPlayerIndex}));
+                setGameState(prev => ({...prev, currentPlayerIndex: nextPlayerIndex}));
                 } else {
                     // No more players, let the all players decided logic above handle phase transition
                     console.log(`[DEBUG] No more players for vote decisions, waiting for phase transition`);
@@ -1238,10 +1238,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
           if (nextPlayerIndex !== -1) {
             console.log(`[DEBUG] Vote decision processed, advancing to ${newPlayers[nextPlayerIndex].name}`);
             return {...prev, players: newPlayers, currentPlayerIndex: nextPlayerIndex};
-          } else {
+              } else {
             console.log(`[DEBUG] Vote decision processed, no more players need to decide`);
             return {...prev, players: newPlayers};
-          }
+              }
       });
   }, [gameState.currentPlayerIndex, gameState.players, addCommentary, findNextPlayerForDecision]);
 
@@ -2662,10 +2662,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                 />
               )}
             </div>
-          </div>
+            </div>
         );
       })}
-
+        
       {/* Human Player's Hand Cards Only */}
       <div className="absolute bottom-4 sm:bottom-6 left-0 right-0 flex justify-center z-40">
         <div className="flex justify-center items-center space-x-1 sm:space-x-2 bg-black/20 rounded-xl p-2 sm:p-4 backdrop-blur-sm border border-amber-500/30">
@@ -2698,6 +2698,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
               card={card} 
               isSelected={selectedCards?.some(c => c.suit === card.suit && c.rank === card.rank) || false}
               onClick={() => onCardClick(card)}
+              humanPlayer={true}
               isPlayable={
                 (gameState.gamePhase === GamePhase.GAMEPLAY && gameState.players[gameState.currentPlayerIndex].isHuman) ||
                 (gameState.gamePhase === GamePhase.FIRST_SWAP_ACTION && gameState.players[gameState.currentPlayerIndex].isHuman) ||

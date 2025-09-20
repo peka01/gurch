@@ -9,15 +9,18 @@ interface CardProps {
   onClick?: () => void;
   small?: boolean;
   faceDown?: boolean;
+  humanPlayer?: boolean;
 }
 
-const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, isPlayable = true, faceDown = false }) => {
+const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, isPlayable = true, faceDown = false, humanPlayer = false }) => {
   const isRed = card.suit === '♥' || card.suit === '♦';
   const colorClass = isRed ? 'text-red-500' : 'text-black';
-  // Responsive sizing: smaller on mobile, larger on desktop
+  // Responsive sizing: larger cards with properly proportioned symbols
   const sizeClass = small 
-    ? 'w-8 h-11 sm:w-10 sm:h-14 text-xs sm:text-sm' 
-    : 'w-12 h-18 sm:w-16 sm:h-24 text-lg sm:text-2xl';
+    ? 'w-14 h-20 sm:w-16 sm:h-24 text-sm sm:text-base' 
+    : humanPlayer
+    ? 'w-20 h-26 sm:w-24 sm:h-36 text-lg sm:text-2xl' // 20% smaller than normal
+    : 'w-24 h-32 sm:w-32 sm:h-44 text-xl sm:text-3xl';
 
   // If face down, render a face-down card
   if (faceDown) {
@@ -38,14 +41,14 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
         title="Face down card"
       >
         {/* Face down pattern */}
-        <div className="text-white text-xs font-bold opacity-80">
-          <div className="text-center">🂠</div>
-          <div className="text-center text-xs mt-1">GURCH</div>
+        <div className="text-white text-lg font-bold opacity-80">
+          <div className="text-center text-2xl">🂠</div>
+          <div className="text-center text-lg mt-1">GURCH</div>
         </div>
         
         {/* Selection indicator for face down cards */}
         {isSelected && (
-          <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-cyan-400 text-black text-xs font-bold rounded-full w-4 h-4 sm:w-6 sm:h-6 flex items-center justify-center border-2 border-white">
+          <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-cyan-400 text-black text-base font-bold rounded-full w-6 h-6 sm:w-10 sm:h-10 flex items-center justify-center border-2 border-white">
             ✓
           </div>
         )}
@@ -63,7 +66,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
   const getCardValueDisplay = () => {
     if (small) return null;
     return (
-      <div className="absolute top-0 right-0 bg-gray-800 text-white text-xs px-1 rounded-bl-lg rounded-tr-lg font-bold hidden sm:block">
+      <div className="absolute top-0 right-0 bg-gray-800 text-white text-base px-1 rounded-bl-lg rounded-tr-lg font-bold hidden sm:block">
         {card.value}
       </div>
     );
@@ -73,7 +76,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
   const getSelectionIndicator = () => {
     if (!isSelected) return null;
     return (
-      <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-cyan-400 text-black text-xs font-bold rounded-full w-4 h-4 sm:w-6 sm:h-6 flex items-center justify-center border-2 border-white">
+      <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-cyan-400 text-black text-base font-bold rounded-full w-6 h-6 sm:w-10 sm:h-10 flex items-center justify-center border-2 border-white">
         ✓
       </div>
     );
@@ -97,9 +100,9 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
       {getCardValueDisplay()}
       {getSelectionIndicator()}
       
-      <div className="text-left font-bold text-xs sm:text-sm">{card.rank}</div>
-      <div className={`text-center font-bold ${small ? 'text-lg sm:text-2xl' : 'text-2xl sm:text-4xl'}`}>{card.suit}</div>
-      <div className="text-right font-bold transform rotate-180 text-xs sm:text-sm">{card.rank}</div>
+      <div className="text-left font-bold text-xl sm:text-2xl">{card.rank}</div>
+      <div className={`text-center font-bold ${small ? 'text-2xl sm:text-3xl' : humanPlayer ? 'text-3xl sm:text-4xl' : 'text-4xl sm:text-5xl'}`}>{card.suit}</div>
+      <div className="text-right font-bold transform rotate-180 text-xl sm:text-2xl">{card.rank}</div>
       
       {/* Hover effect overlay */}
       {onClick && isPlayable && (
