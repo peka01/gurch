@@ -2622,6 +2622,50 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                 </div>
               )}
       
+      {/* Bot Players Dealing Cards - Outside their boxes */}
+      {isDealing && gameState.players.filter(player => !player.isHuman).map((player, index) => {
+        const botIndex = gameState.players.findIndex(p => p.id === player.id);
+        const position = playerPositions[botIndex];
+        if (!position) return null;
+
+        let dealingAreaClass = "absolute flex justify-center items-center space-x-1 z-50";
+        
+        // Position dealing cards outside each bot's player box
+        if (position.class.includes('top')) {
+          dealingAreaClass += " top-40 left-1/2 transform -translate-x-1/2";
+        } else if (position.class.includes('left')) {
+          dealingAreaClass += " left-60 top-1/2 transform -translate-y-1/2";
+        } else if (position.class.includes('right')) {
+          dealingAreaClass += " right-60 top-1/2 transform -translate-y-1/2";
+        }
+
+        return (
+          <div key={`bot-dealing-${player.id}`} className={dealingAreaClass}>
+            <div className="flex justify-center items-center space-x-1 bg-black/20 rounded-xl p-2 backdrop-blur-sm border border-amber-500/30">
+              {/* Show face-down cards being dealt */}
+              {dealingCards[player.id]?.map((card, cardIndex) => (
+                <CardComponent 
+                  key={`dealing-${card.rank}-${card.suit}-${cardIndex}`} 
+                  card={card} 
+                  faceDown={true}
+                  small={true}
+                  isPlayable={false}
+                />
+              ))}
+              {/* Show face-up card if it's been dealt */}
+              {faceUpCards[player.id] && (
+                <CardComponent 
+                  key={`faceup-${faceUpCards[player.id].rank}-${faceUpCards[player.id].suit}`} 
+                  card={faceUpCards[player.id]} 
+                  small={true}
+                  isPlayable={false}
+                />
+              )}
+            </div>
+          </div>
+        );
+      })}
+
       {/* Human Player's Hand Cards Only */}
       <div className="absolute bottom-4 sm:bottom-6 left-0 right-0 flex justify-center z-40">
         <div className="flex justify-center items-center space-x-1 sm:space-x-2 bg-black/20 rounded-xl p-2 sm:p-4 backdrop-blur-sm border border-amber-500/30">

@@ -114,42 +114,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, 
           )}
         </div>
         
-        {/* Visual dealing cards for portrait layout only (no card count) */}
-        {!useLandscapeLayout && !isBottomPlayer && (
-          <div className="flex items-center space-x-1 mt-1 justify-center">
-            {/* Show visual dealing cards */}
-            {isDealing ? (
-              <>
-                {/* Show face-down cards being dealt */}
-                {dealingCards?.map((card, index) => (
-                  <div key={`dealing-${card.rank}-${card.suit}-${index}`} className="relative z-50">
-                    <CardComponent 
-                      card={card} 
-                      faceDown={true}
-                      small={true}
-                      isPlayable={false}
-                    />
-                  </div>
-                ))}
-                {/* Show face-up card if it's been dealt */}
-                {faceUpDealingCard && (
-                  <div key={`faceup-${faceUpDealingCard.rank}-${faceUpDealingCard.suit}`} className="relative z-50">
-                    <CardComponent 
-                      card={faceUpDealingCard} 
-                      small={true}
-                      isPlayable={false}
-                    />
-                  </div>
-                )}
-              </>
-            ) : (
-              /* Show normal face-up card when not dealing */
-              gamePhase === GamePhase.DEALING && faceUpCard && (
-                <CardComponent card={faceUpCard} small={true} />
-              )
-            )}
-          </div>
-        )}
+        {/* No dealing cards shown inside player boxes - they're now displayed outside */}
         
         {/* Show swapping cards with animation */}
         {swappingCards && swappingCards.length > 0 && (
