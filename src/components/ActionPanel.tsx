@@ -371,7 +371,7 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                 }
                 break;
             case GamePhase.FINAL_SWAP_ACTION:
-                if (isHumanTurn && !humanPlayer.hasStoodPat && humanPlayer.hasMadeFinalSwapDecision) {
+                if (isHumanTurn && !humanPlayer.hasStoodPat) {
                      return (
                         <div className="flex items-center space-x-3">
                             <p className="text-sm font-medium text-amber-100">Select {gameState.voteResult} cards for the final swap.</p>
