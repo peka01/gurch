@@ -1217,8 +1217,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
           const newPlayers = [...prev.players];
           newPlayers[playerIndex].wantsToVote = wantsToVote;
 
-          // Check if all players have made their decision
-          const allDecided = newPlayers.every(p => p.wantsToVote !== undefined || p.hasStoodPat);
+          // Check if all players who should vote have made their decision
+          // Only players who didn't stand pat should vote
+          const playersWhoShouldVote = newPlayers.filter(p => !p.hasStoodPat);
+          const allDecided = playersWhoShouldVote.every(p => p.wantsToVote !== undefined);
           
           if (allDecided) {
               // All players have decided
@@ -1236,7 +1238,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
               return {...prev, players: newPlayers, gamePhase: GamePhase.VOTE_SWAP, currentPlayerIndex: firstVoterIndex };
           }
 
-          // Find next player to make a decision
+          // Find next player to make a decision (only among players who didn't stand pat)
           let nextPlayerIndex = -1;
           for (let i = 1; i < newPlayers.length; i++) {
               const potentialIndex = (playerIndex + i) % newPlayers.length;
