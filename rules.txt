@@ -32,6 +32,7 @@
 *   **Winning a Round:** To win a round, you must play a valid set of cards (all same rank) that is equal to or higher than the current winning play. The last person to play the highest rank wins the round and leads the next.
 *   **Forced Plays:** If you can play a valid, winning set, you *must* do so.
 *   **"Beat and Sacrifice":** This is a special move. If you cannot play a valid set (e.g., you don't have two Kings to beat two 8s), but you *do* have a single card that is higher than the lead (e.g., an Ace), you *must* play that higher card. Then, to match the card count, you *must* also play your lowest-value card(s). For example, if the lead is two 8s and your hand is Ace, King, 7, 3, 2, you could play the Ace and the 2, or the King and the 2.
+*   **"Equal and Sacrifice":** Similar to "Beat and Sacrifice", if you cannot play a valid matching set but you have a single card equal to the lead rank, you can play that equal card plus your lowest cards to match the count. For example, if the lead is two Kings and you only have one King, you can play the King plus your lowest card.
 *   **Sacrificing:** If you cannot play a valid, winning set/card, you must "sacrifice" by playing your lowest value card(s). The number of cards must match the lead. A sacrifice play cannot win a round.
 *   If no one can beat the lead cards, the original player who started the round wins it and starts next round again.
 *   Bots must follow the rules and should play to win. They are all experienced Gurch players and hard to beat.

@@ -1657,25 +1657,27 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             return true;
         }
         
-        // Only apply "beat and sacrifice" rule if player has higher cards but can't make a valid set
-        if (canBeatAndSacrifice && !winningPlays.length) {
-            // Player must play a higher card + lowest cards to match count
+        // Apply "beat/equal and sacrifice" rule if player has higher/equal cards but can't make a valid set
+        if ((canBeatAndSacrifice || equalPlays.length > 0) && !winningPlays.length) {
+            // Player must play a higher/equal card + lowest cards to match count
             const hasHigherCard = cards.some(c => c.value > leadHand[0].value);
+            const hasEqualCard = cards.some(c => c.value === leadHand[0].value);
             const sortedHand = [...player.hand].sort((a,b) => a.value - b.value);
-            const lowestCards = sortedHand.slice(0, leadHand.length - 1); // -1 because one card is the higher card
+            const lowestCards = sortedHand.slice(0, leadHand.length - 1); // -1 because one card is the higher/equal card
             
             // Fixed: Allow any cards with the same VALUES as the lowest cards, not exact matches
             const lowestValues = lowestCards.map(c => c.value);
             const sacrificeCards = cards.filter(c => c.value <= leadHand[0].value);
             const hasLowestCards = sacrificeCards.every(card => lowestValues.includes(card.value));
             
-            console.log(`[VALIDATION] Beat & sacrifice - lowest values required: [${lowestValues.join(', ')}], sacrifice cards played: [${sacrificeCards.map(c => c.value).join(', ')}]`);
+            const playType = hasHigherCard ? "Beat & sacrifice" : "Equal & sacrifice";
+            console.log(`[VALIDATION] ${playType} - lowest values required: [${lowestValues.join(', ')}], sacrifice cards played: [${sacrificeCards.map(c => c.value).join(', ')}]`);
             
-            if (hasHigherCard && hasLowestCards) {
-                console.log("[VALIDATION] PASSED: Valid 'beat and sacrifice' play.");
+            if ((hasHigherCard || hasEqualCard) && hasLowestCards) {
+                console.log(`[VALIDATION] PASSED: Valid '${playType}' play.`);
                 return true;
             } else {
-                console.log("[VALIDATION] FAILED: Invalid 'beat and sacrifice' - must play higher card + lowest cards.");
+                console.log(`[VALIDATION] FAILED: Invalid '${playType}' - must play higher/equal card + lowest cards.`);
                 return false;
             }
         }
@@ -1832,14 +1834,26 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         group.length >= leadCount && group[0].value >= leadValue
     ).map(group => group.slice(0, leadCount));
 
-    // Check for "beat and sacrifice"
+    // Check for "beat and sacrifice" or "equal and sacrifice"
     let beatAndSacrificePlay: Card[] | null = null;
+    let equalAndSacrificePlay: Card[] | null = null;
+    
+    // Higher card + sacrifice
     const higherCards = hand.filter(c => c.value > leadValue);
     if (higherCards.length > 0) {
         const lowestBeatingCard = higherCards.sort((a,b) => a.value - b.value)[0];
         const restOfHand = hand.filter(c => c.rank !== lowestBeatingCard.rank || c.suit !== lowestBeatingCard.suit);
         const lowestCards = restOfHand.sort((a,b) => a.value - b.value).slice(0, leadCount - 1);
         beatAndSacrificePlay = [lowestBeatingCard, ...lowestCards];
+    }
+    
+    // Equal card + sacrifice (if no winning sets available)
+    const equalCards = hand.filter(c => c.value === leadValue);
+    if (equalCards.length > 0 && winningPlays.length === 0) {
+        const equalCard = equalCards[0]; // Use first equal card
+        const restOfHand = hand.filter(c => c.rank !== equalCard.rank || c.suit !== equalCard.suit);
+        const lowestCards = restOfHand.sort((a,b) => a.value - b.value).slice(0, leadCount - 1);
+        equalAndSacrificePlay = [equalCard, ...lowestCards];
     }
     
     // ENHANCED Bot Strategy:
@@ -1869,9 +1883,14 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         return winningPlays[0];
     }
 
-    // 2. If no winning set but can "beat and sacrifice", do that.
-    if (beatAndSacrificePlay) {
+    // 2. If no winning set but can "beat and sacrifice" or "equal and sacrifice", choose best option
+    if (beatAndSacrificePlay && equalAndSacrificePlay) {
+        // Both options available - prefer beat and sacrifice (more aggressive)
         return beatAndSacrificePlay;
+    } else if (beatAndSacrificePlay) {
+        return beatAndSacrificePlay;
+    } else if (equalAndSacrificePlay) {
+        return equalAndSacrificePlay;
     }
 
     // 3. Otherwise, sacrifice the lowest cards.
@@ -2348,22 +2367,37 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             
             // Check if player has any cards that can beat the lead
             const higherCards = humanPlayer.hand.filter(c => c.value > highestLeadCard);
+            const equalCards = humanPlayer.hand.filter(c => c.value === highestLeadCard);
             const hasWinningCards = higherCards.length > 0;
+            const hasEqualCards = equalCards.length > 0;
             
-            // Check if it's a valid equal-rank play
+            // Check if it's a valid equal-rank play (complete set)
             const isEqualPlay = highestPlayedCard === highestLeadCard && 
                                newSelection.every(c => c.value === newSelection[0].value);
             
-            if (hasWinningCards && !canBeatOrMatchLead && !isEqualPlay) {
-                // Player has cards that can beat the lead, but current selection doesn't beat or match
+            // Check if this could be an "equal and sacrifice" play
+            const hasEqualCardInSelection = newSelection.some(c => c.value === highestLeadCard);
+            const sortedHand = [...humanPlayer.hand].sort((a, b) => a.value - b.value);
+            const lowestCards = sortedHand.slice(0, leadHand.length);
+            const isSelectingLowestOrEqual = lowestCards.some(c => c.rank === card.rank && c.suit === card.suit) || 
+                                           card.value === highestLeadCard;
+            
+            if (hasWinningCards && !canBeatOrMatchLead && !isEqualPlay && !hasEqualCardInSelection) {
+                // Player has cards that can beat the lead, but current selection doesn't beat, match, or equal
                 addCommentary(`You must play cards that can beat or match the ${leadHand[0].rank}s.`);
+                return prev;
+            }
+            
+            // If player can't beat the lead but has equal cards, allow equal + sacrifice
+            if (!hasWinningCards && hasEqualCards) {
+                if (!isSelectingLowestOrEqual) {
+                    addCommentary(`You can play equal cards (${leadHand[0].rank}) plus your lowest cards, or sacrifice lowest cards.`);
                     return prev;
                 }
+            }
             
-            // If player can't beat the lead, they must sacrifice their lowest cards
-            if (!hasWinningCards) {
-                const sortedHand = [...humanPlayer.hand].sort((a, b) => a.value - b.value);
-                const lowestCards = sortedHand.slice(0, leadHand.length);
+            // If player can't beat or equal the lead, they must sacrifice their lowest cards
+            if (!hasWinningCards && !hasEqualCards) {
                 const isLowest = lowestCards.some(c => c.rank === card.rank && c.suit === card.suit);
                 if (!isLowest) {
                     addCommentary(`You can't beat the hand, you must sacrifice your lowest cards.`);
