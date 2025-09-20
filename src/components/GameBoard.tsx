@@ -2172,18 +2172,22 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                 return prev; // Don't allow selecting more cards than needed
             }
             
-            // Check if the current selection can beat the lead
+            // Check if the current selection can beat or match the lead
             const highestPlayedCard = Math.max(...newSelection.map(c => c.value));
             const highestLeadCard = Math.max(...leadHand.map(c => c.value));
-            const canBeatLead = highestPlayedCard > highestLeadCard;
+            const canBeatOrMatchLead = highestPlayedCard >= highestLeadCard;
             
             // Check if player has any cards that can beat the lead
             const higherCards = humanPlayer.hand.filter(c => c.value > highestLeadCard);
             const hasWinningCards = higherCards.length > 0;
             
-            if (hasWinningCards && !canBeatLead) {
-                // Player has cards that can beat the lead, but current selection doesn't
-                addCommentary(`You must play cards that can beat the ${leadHand[0].rank}s.`);
+            // Check if it's a valid equal-rank play
+            const isEqualPlay = highestPlayedCard === highestLeadCard && 
+                               newSelection.every(c => c.value === newSelection[0].value);
+            
+            if (hasWinningCards && !canBeatOrMatchLead && !isEqualPlay) {
+                // Player has cards that can beat the lead, but current selection doesn't beat or match
+                addCommentary(`You must play cards that can beat or match the ${leadHand[0].rank}s.`);
                     return prev;
                 }
             
