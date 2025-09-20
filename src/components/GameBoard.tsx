@@ -2146,10 +2146,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
 
   const getPlayerPositions = () => {
     const positions = [
-      { class: 'top-4', style: { left: '50%', transform: 'translateX(-50%)' } }, // Top
-      { class: 'right-4', style: { top: '50%', right: '20px', transform: 'translateY(-50%)' } }, // Right - fixed positioning
-      { class: 'bottom-32', style: { left: '50%', transform: 'translateX(-50%)' } }, // Bottom (Human) - use inline CSS
-      { class: 'left-4', style: { top: '50%', left: '20px', transform: 'translateY(-50%)' } } // Left - fixed positioning
+      { class: 'top-2 sm:top-4', style: { left: '50%', transform: 'translateX(-50%)' } }, // Top
+      { class: 'right-2 sm:right-4', style: { top: '50%', right: '10px', transform: 'translateY(-50%)' } }, // Right - fixed positioning
+      { class: 'bottom-20 sm:bottom-32', style: { left: '50%', transform: 'translateX(-50%)' } }, // Bottom (Human) - use inline CSS
+      { class: 'left-2 sm:left-4', style: { top: '50%', left: '10px', transform: 'translateY(-50%)' } } // Left - fixed positioning
     ];
     const humanIndex = gameState.players.findIndex(p => p.isHuman);
     if (humanIndex === -1) return positions.slice(0, gameState.players.length);
@@ -2365,35 +2365,35 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="relative w-4/5 h-4/5 max-w-6xl max-h-5xl">
           {/* Main Table */}
-          <div className="absolute inset-0 bg-gradient-to-br from-green-700 to-green-800 rounded-full shadow-2xl border-8 border-amber-600">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-700 to-green-800 rounded-full shadow-2xl border-4 sm:border-8 border-amber-600">
             {/* Table Felt Pattern */}
-            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-green-600 to-green-700 opacity-90">
+            <div className="absolute inset-2 sm:inset-4 rounded-full bg-gradient-to-br from-green-600 to-green-700 opacity-90">
               <div className="absolute inset-0 rounded-full" style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M20 20c0-11.046-8.954-20-20-20v40c11.046 0 20-8.954 20-20z'/%3E%3Cpath d='M20 20c0 11.046 8.954 20 20 20V0c-11.046 0-20 8.954-20 20z'/%3E%3C/g%3E%3C/svg%3E")`,
               }} />
             </div>
             
             {/* Table Border Details */}
-            <div className="absolute inset-2 rounded-full border-4 border-amber-500 opacity-60"></div>
-            <div className="absolute inset-6 rounded-full border-2 border-amber-400 opacity-40"></div>
+            <div className="absolute inset-1 sm:inset-2 rounded-full border-2 sm:border-4 border-amber-500 opacity-60"></div>
+            <div className="absolute inset-3 sm:inset-6 rounded-full border-1 sm:border-2 border-amber-400 opacity-40"></div>
           </div>
         </div>
       </div>
       
       {/* Dealer Position */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30">
-        <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-full p-4 shadow-2xl border-4 border-amber-400">
-          <div className="w-16 h-16 bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center text-2xl">
+        <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-full p-2 sm:p-4 shadow-2xl border-2 sm:border-4 border-amber-400">
+          <div className="w-10 h-10 sm:w-16 sm:h-16 bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center text-lg sm:text-2xl">
             🎰
           </div>
-          <div className="text-center mt-2">
-            <div className="text-white font-bold text-sm">DEALER</div>
-            <div className="text-amber-200 text-xs">GURCH</div>
+          <div className="text-center mt-1 sm:mt-2">
+            <div className="text-white font-bold text-xs sm:text-sm">DEALER</div>
+            <div className="text-amber-200 text-xs hidden sm:block">GURCH</div>
           </div>
         </div>
       </div>
 
-      <button onClick={onQuit} className="absolute top-4 right-4 bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg z-50 shadow-lg">
+      <button onClick={onQuit} className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-red-600 hover:bg-red-500 text-white font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-lg z-50 shadow-lg text-sm sm:text-base">
           Quit
       </button>
 
@@ -2422,28 +2422,28 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       
 
       {/* Human Player's Hand - Poker Table Position */}
-      <div className="absolute bottom-8" style={{left: '50%', transform: 'translateX(-50%)'}}>
+      <div className="absolute bottom-2 sm:bottom-8" style={{left: '50%', transform: 'translateX(-50%)'}}>
         {/* Player Seat */}
-        <div className="bg-gradient-to-br from-amber-800 to-amber-900 rounded-2xl p-4 shadow-2xl border-4 border-amber-400 mb-4">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-full border-4 border-amber-400 overflow-hidden">
+        <div className="bg-gradient-to-br from-amber-800 to-amber-900 rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-2xl border-2 sm:border-4 border-amber-400 mb-2 sm:mb-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full border-2 sm:border-4 border-amber-400 overflow-hidden">
               {gameState.players.find(p => p.isHuman)?.avatar ? (
                 <img src={gameState.players.find(p => p.isHuman)!.avatar} alt="You" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-amber-200 to-amber-300 flex items-center justify-center text-xl font-bold text-amber-800">
+                <div className="w-full h-full bg-gradient-to-br from-amber-200 to-amber-300 flex items-center justify-center text-sm sm:text-xl font-bold text-amber-800">
                   👤
                 </div>
               )}
             </div>
             <div>
-              <p className="text-white font-bold text-lg">You</p>
-              <p className="text-amber-200 text-sm">Score: {gameState.players.find(p => p.isHuman)?.score || 0}</p>
+              <p className="text-white font-bold text-sm sm:text-lg">You</p>
+              <p className="text-amber-200 text-xs sm:text-sm">Score: {gameState.players.find(p => p.isHuman)?.score || 0}</p>
             </div>
           </div>
         </div>
         
         {/* Cards Area */}
-        <div className="flex justify-center items-center space-x-2 bg-black/20 rounded-xl p-4 backdrop-blur-sm border border-amber-500/30">
+        <div className="flex justify-center items-center space-x-1 sm:space-x-2 bg-black/20 rounded-xl p-2 sm:p-4 backdrop-blur-sm border border-amber-500/30">
         {/* Show visual dealing cards if dealing is in progress */}
         {isDealing ? (
           <>
@@ -2500,22 +2500,22 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       {/* Revealed Card for 1-card swap */}
       {gameState.gamePhase === GamePhase.FINAL_SWAP_ONE_CARD_REVEAL_AND_DECIDE && gameState.revealedCard && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
-           <div className="bg-blue-200 border-4 border-blue-400 rounded-xl p-4 shadow-2xl flex flex-col items-center text-center">
-            <h3 className="text-lg font-bold text-black mb-2">
+           <div className="bg-blue-200 border-2 sm:border-4 border-blue-400 rounded-xl p-3 sm:p-4 shadow-2xl flex flex-col items-center text-center max-w-[90vw] sm:max-w-none">
+            <h3 className="text-base sm:text-lg font-bold text-black mb-2">
               Swap for this card?
             </h3>
             <CardComponent card={gameState.revealedCard} />
             
               { gameState.players[gameState.currentPlayerIndex].isHuman && (
               <>
-                <p className="text-sm text-black/80 my-2">
+                <p className="text-xs sm:text-sm text-black/80 my-2 px-2">
                   Accept the revealed card? If you decline, you'll receive the next card from the deck.
                 </p>
-                <div className="flex space-x-4 mt-2">
-                    <button onClick={() => handleFinalOneCardSwap('keep')} className="px-4 py-2 font-bold text-white rounded-lg shadow-md bg-green-600 hover:bg-green-500">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-2">
+                    <button onClick={() => handleFinalOneCardSwap('keep')} className="px-3 py-2 sm:px-4 sm:py-2 font-bold text-white rounded-lg shadow-md bg-green-600 hover:bg-green-500 text-sm sm:text-base min-h-[44px]">
                       Accept Card
                     </button>
-                    <button onClick={() => handleFinalOneCardSwap('discard')} className="px-4 py-2 font-bold text-white rounded-lg shadow-md bg-red-600 hover:bg-red-500">
+                    <button onClick={() => handleFinalOneCardSwap('discard')} className="px-3 py-2 sm:px-4 sm:py-2 font-bold text-white rounded-lg shadow-md bg-red-600 hover:bg-red-500 text-sm sm:text-base min-h-[44px]">
                       Decline
                     </button>
                 </div>
@@ -2528,11 +2528,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       {/* Gameplay Start Indicator */}
       {showGameplayStart && (
         <div className="absolute inset-0 flex items-center justify-center z-50">
-          <div className="bg-gradient-to-r from-green-500 to-blue-500 border-4 border-white rounded-2xl p-8 shadow-2xl animate-pulse">
+          <div className="bg-gradient-to-r from-green-500 to-blue-500 border-2 sm:border-4 border-white rounded-xl sm:rounded-2xl p-4 sm:p-8 shadow-2xl animate-pulse max-w-[90vw] sm:max-w-none">
             <div className="text-center">
-              <h2 className="text-4xl font-bold text-white mb-4">🎮 GAMEPLAY BEGINS! 🎮</h2>
-              <p className="text-xl text-white/90 mb-2">All swapping rounds are complete!</p>
-              <p className="text-lg text-white/80">Time to play your cards and win the game!</p>
+              <h2 className="text-2xl sm:text-4xl font-bold text-white mb-2 sm:mb-4">🎮 GAMEPLAY BEGINS! 🎮</h2>
+              <p className="text-lg sm:text-xl text-white/90 mb-1 sm:mb-2">All swapping rounds are complete!</p>
+              <p className="text-base sm:text-lg text-white/80">Time to play your cards and win the game!</p>
             </div>
           </div>
         </div>

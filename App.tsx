@@ -90,17 +90,17 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 text-white p-4 flex flex-col items-center justify-center">
-      <header className="w-full text-center mb-4 relative z-50">
-        <h1 className="text-4xl md:text-5xl font-bold text-cyan-400" style={{ textShadow: '0 0 10px rgba(0, 255, 255, 0.7)'}}>
-          <i className="fas fa-crown mr-3"></i>Gurch Card Game
+    <div className="min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 text-white p-2 sm:p-4 flex flex-col items-center justify-center">
+      <header className="w-full text-center mb-2 sm:mb-4 relative z-50">
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-cyan-400" style={{ textShadow: '0 0 10px rgba(0, 255, 255, 0.7)'}}>
+          <i className="fas fa-crown mr-2 sm:mr-3"></i>Gurch Card Game
         </h1>
       </header>
       <main className="w-full max-w-7xl flex-grow">
         {loadingAvatars && (
             <div className="flex flex-col items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-cyan-400"></div>
-                <p className="mt-4 text-xl">Generating amazing avatars...</p>
+                <div className="animate-spin rounded-full h-24 w-24 sm:h-32 sm:w-32 border-t-2 border-b-2 border-cyan-400"></div>
+                <p className="mt-4 text-lg sm:text-xl text-center px-4">Generating amazing avatars...</p>
             </div>
         )}
         {!gameStarted && !loadingAvatars && <GameLobby onStartGame={startGame} />}

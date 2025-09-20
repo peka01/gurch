@@ -20,8 +20,11 @@ const TrickArea: React.FC<TrickAreaProps> = ({
   currentPlayerId
 }) => {
 
-  // Center of screen for stick area
+  // Center of screen for stick area - responsive sizing
   const stickAreaCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  const isMobile = window.innerWidth < 640; // sm breakpoint
+  const stickWidth = isMobile ? '300px' : '500px';
+  const stickHeight = isMobile ? '150px' : '250px';
 
   // Determine which card is currently winning
   const getCurrentWinningCard = (): { playerId: string; cardIndex: number } | null => {
@@ -53,18 +56,18 @@ const TrickArea: React.FC<TrickAreaProps> = ({
     <div className="absolute inset-0 pointer-events-none z-30">
       {/* Stick Area Background */}
       <div 
-        className="absolute bg-yellow-500/30 border-4 border-yellow-300 rounded-2xl shadow-2xl"
+        className="absolute bg-yellow-500/30 border-2 sm:border-4 border-yellow-300 rounded-xl sm:rounded-2xl shadow-2xl"
         style={{
           left: '50%',
           top: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '500px',
-          height: '250px',
+          width: stickWidth,
+          height: stickHeight,
           zIndex: 30
         }}
       >
-        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
-          <div className="bg-black/80 text-white px-3 py-1 rounded-lg text-sm font-bold">
+        <div className="absolute -top-6 sm:-top-8 left-1/2 transform -translate-x-1/2">
+          <div className="bg-black/80 text-white px-2 py-1 sm:px-3 sm:py-1 rounded-lg text-xs sm:text-sm font-bold">
             {roundWinnerId ? 
               `${players.find(p => p.id === roundWinnerId)?.name} leads` : 
               'Stick Area'
@@ -80,8 +83,8 @@ const TrickArea: React.FC<TrickAreaProps> = ({
           left: '50%',
           top: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '500px',
-          height: '250px',
+          width: stickWidth,
+          height: stickHeight,
           zIndex: 40
         }}
       >
@@ -89,22 +92,25 @@ const TrickArea: React.FC<TrickAreaProps> = ({
           const player = players.find(p => p.id === play.playerId);
           if (!player) return null;
 
-          // Calculate base position for this player's cards
-          const baseX = 250 + (playIndex - (currentTrick.length - 1) / 2) * 100 - 30;
-          const baseY = 125 - 45;
+          // Calculate base position for this player's cards - responsive
+          const centerX = isMobile ? 150 : 250;
+          const centerY = isMobile ? 75 : 125;
+          const spacing = isMobile ? 60 : 100;
+          const baseX = centerX + (playIndex - (currentTrick.length - 1) / 2) * spacing - 30;
+          const baseY = centerY - 45;
 
           return (
             <div key={play.playerId} className="absolute">
               {/* Player name label */}
               <div 
-                className="absolute text-xs font-bold text-white bg-black/70 px-2 py-1 rounded shadow-lg"
+                className="absolute text-xs font-bold text-white bg-black/70 px-1 py-0.5 sm:px-2 sm:py-1 rounded shadow-lg"
                 style={{
                   left: baseX - 10,
-                  top: baseY - 25,
+                  top: baseY - 20,
                   zIndex: 45
                 }}
               >
-                {player.name}
+                {isMobile ? player.name.split(' ')[0] : player.name}
               </div>
               
               {/* Cards for this player */}
@@ -113,9 +119,10 @@ const TrickArea: React.FC<TrickAreaProps> = ({
                   winningCardInfo.playerId === play.playerId && 
                   winningCardInfo.cardIndex === cardIndex;
 
-                // Better spacing for multiple cards
-                const cardX = baseX + (cardIndex * 15); // Horizontal spread
-                const cardY = baseY + (cardIndex * 8);  // Slight vertical offset
+                // Better spacing for multiple cards - responsive
+                const cardSpacing = isMobile ? 10 : 15;
+                const cardX = baseX + (cardIndex * cardSpacing); // Horizontal spread
+                const cardY = baseY + (cardIndex * (isMobile ? 5 : 8));  // Slight vertical offset
 
                 return (
                   <div
@@ -131,7 +138,7 @@ const TrickArea: React.FC<TrickAreaProps> = ({
                   >
                     <CardComponent card={card} />
                     {isWinningCard && (
-                      <div className="absolute -top-2 -right-2 bg-yellow-500 text-black text-xs font-bold px-1 py-0.5 rounded-full shadow-lg">
+                      <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-yellow-500 text-black text-xs font-bold px-1 py-0.5 rounded-full shadow-lg">
                         🏆
                       </div>
                     )}

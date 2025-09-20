@@ -58,10 +58,10 @@ const ActionButton: React.FC<ActionButtonProps> = ({
 
     const getSizeClasses = () => {
         switch (size) {
-            case 'sm': return 'px-3 py-1.5 text-sm';
-            case 'md': return 'px-4 py-2 text-sm md:px-6 md:py-3';
-            case 'lg': return 'px-6 py-3 text-lg md:px-8 md:py-4';
-            default: return 'px-4 py-2 text-sm md:px-6 md:py-3';
+            case 'sm': return 'px-3 py-2 text-sm min-h-[44px]'; // Touch-friendly minimum height
+            case 'md': return 'px-4 py-3 text-sm md:px-6 md:py-3 min-h-[44px] md:min-h-[48px]';
+            case 'lg': return 'px-6 py-4 text-lg md:px-8 md:py-4 min-h-[48px] md:min-h-[56px]';
+            default: return 'px-4 py-3 text-sm md:px-6 md:py-3 min-h-[44px] md:min-h-[48px]';
         }
     };
 
@@ -95,6 +95,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
                     transform disabled:scale-100 hover:scale-105 active:scale-95
                     border-2 hover:border-white/30
                     focus:outline-none focus:ring-4 focus:ring-white/30
+                    touch-manipulation select-none
                 `}
                 title={requiresConfirmation ? "Requires confirmation" : undefined}
             >
@@ -188,7 +189,7 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                     return (
                         <div>
                             <p className="text-sm font-medium text-amber-100 mb-3">Do you want to swap cards or stand pat?</p>
-                            <div className="flex justify-center space-x-2">
+                            <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-2">
                                 <ActionButton 
                                     onClick={() => onSwapDecision(true)} 
                                     variant="primary" 
@@ -244,7 +245,7 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                     return (
                         <div>
                             <p className="text-sm font-medium text-amber-100 mb-3">{playerName} chose to swap {gameState.swapAmount} cards. Do you want to swap the same number or stand pat?</p>
-                            <div className="flex justify-center space-x-2">
+                            <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-2">
                                 <ActionButton 
                                     onClick={() => onOtherPlayerSwap(true)} 
                                     variant="primary" 
@@ -344,7 +345,7 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                     return (
                         <div>
                             <p className="text-sm font-medium text-amber-100 mb-3">Vote for how many cards to swap:</p>
-                            <div className="flex justify-center space-x-1">
+                            <div className="flex flex-wrap justify-center gap-1 sm:gap-1">
                                 {[1, 2, 3, 4, 5].map(n => <ActionButton key={n} onClick={() => onVote(n)} size="sm">{n}</ActionButton>)}
                             </div>
                         </div>
@@ -414,23 +415,23 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
             className="fixed z-40 cursor-move"
             style={{
                 left: position.x === 0 ? '50%' : `${position.x}px`,
-                top: position.y === 0 ? '120px' : `${position.y}px`,
+                top: position.y === 0 ? '80px' : `${position.y}px`,
                 transform: position.x === 0 ? 'translateX(-50%)' : 'none'
             }}
             onMouseDown={handleMouseDown}
         >
-            <div className="bg-gradient-to-r from-amber-800/90 to-amber-900/90 backdrop-blur-md border-2 border-amber-400/70 rounded-xl shadow-2xl p-4 text-center min-w-[400px] max-w-[600px]">
-                <div className="drag-handle flex items-center justify-center gap-3 mb-2 cursor-move">
+            <div className="bg-gradient-to-r from-amber-800/90 to-amber-900/90 backdrop-blur-md border-2 border-amber-400/70 rounded-xl shadow-2xl p-3 sm:p-4 text-center min-w-[280px] sm:min-w-[400px] max-w-[90vw] sm:max-w-[600px]">
+                <div className="drag-handle flex items-center justify-center gap-2 sm:gap-3 mb-2 cursor-move">
                     {timer > 0 && (
-                        <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-sm font-bold border-2 border-white shadow-lg">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-red-600 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold border-2 border-white shadow-lg">
                             {timer}
                         </div>
                     )}
-                    <div className="w-6 h-6 bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center text-sm">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center text-xs sm:text-sm">
                         🎯
                     </div>
-                    <div className="text-amber-200 text-sm font-semibold">ACTION REQUIRED</div>
-                    <div className="text-amber-300 text-xs ml-2">(drag to move)</div>
+                    <div className="text-amber-200 text-xs sm:text-sm font-semibold">ACTION REQUIRED</div>
+                    <div className="text-amber-300 text-xs ml-1 sm:ml-2 hidden sm:block">(drag to move)</div>
                 </div>
                 {content}
             </div>
