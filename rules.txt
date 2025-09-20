@@ -6,22 +6,22 @@
 
 *   **Step 1: The Deal**
     *   The dealer deals 4 face-down cards to each player, then one face-up card.
-    *   The player with the highest face-up card starts the action.
+    *   The player with the HIGHEST face-up card STARTS the action.
     *   Tie-breaker: If ranks are tied, the player who was dealt their card last wins the tie.
 
 *   **Step 2: First Swap**
-    *   The starting player decides to either start the game immediately or swap cards.
-    *   If they choose to swap, they select which cards to discard, and receive an equal number of new cards.
-    *   The other players can then choose to swap the *same number* of cards, or to "stand pat" (not swap).
-    *   Players who stand pat are not included in the final swap (Step 3).
+    *   The STARTING player decides to either start the game immediately or swap cards.
+    *   If they choose to SWAP, they select which cards to discard, and receive an equal number of new cards.
+    *   The other players have two options: either choose to swap the *same number* of cards, or to "stand pat" (not swap).
+    *   Players who STAND PAT are not included in the final swap (Step 3) and needs to play the round with their current hand.
 
 *   **Step 3: Final Swap (Vote)**
-    *   Players who participated in the first swap now vote on how many cards (1-5) to discard in a final round.
+    *   Players who participated in the first swap now vote on how many cards (1-5) to discard in the second / final swap.
     *   The number with the majority of votes wins.
-    *   Tie-breaker: If there's no majority, the lowest vote count wins.
+    *   Tie-breaker: If there's no majority, the lowest vote count wins. 0 can NEVER win. 
     *   Players who voted for a different number get a choice to participate in this final swap or not.
     *   **Special 1-Card Swap Rule:** If the vote result is 1, players are shown a face-up card from the deck. They can choose to take it, or reject it and take the next face-down card from the deck.
-    *   For swaps of 2 or more cards, new cards are dealt face-down.
+    *   For swaps of 2 or more cards, new cards are always dealt face-down.
 
 **Gameplay:**
 
@@ -31,11 +31,11 @@
 *   **Winning a Round:** To win a round, you must play a valid set of cards (all same rank) that is equal to or higher than the current winning play. The last person to play the highest rank wins the round and leads the next.
 *   **Forced Plays:** If you can play a valid, winning set, you *must* do so.
 *   **"Beat and Sacrifice":** This is a special move. If you cannot play a valid set (e.g., you don't have two Kings to beat two 8s), but you *do* have a single card that is higher than the lead (e.g., an Ace), you *must* play that higher card. Then, to match the card count, you *must* also play your lowest-value card(s). For example, if the lead is two 8s and your hand is Ace, King, 7, 3, 2, you could play the Ace and the 2, or the King and the 2.
-*   **Sacrificing:** If you cannot play a valid, winning set, you must "sacrifice" by playing your lowest value card(s). The number of cards must match the lead. A sacrifice play cannot win a round.
-*   If no one can beat the lead cards, the original player who started the round wins it and plays again.
+*   **Sacrificing:** If you cannot play a valid, winning set/card, you must "sacrifice" by playing your lowest value card(s). The number of cards must match the lead. A sacrifice play cannot win a round.
+*   If no one can beat the lead cards, the original player who started the round wins it and starts next round again.
 
 **Scoring:**
-*   Scoring is based on the cards played in the final round (when a player goes out).
+*   Scoring is based on the cards played in the final round (when a player goes out). You can go out on multiple cards, if they have the same value!
 *   The player who went out with the lowest total card value wins.
 *   The winner's prize is the total value of the cards played by the player with the *highest* total value in that final round.
 

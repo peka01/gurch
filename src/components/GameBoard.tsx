@@ -835,8 +835,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     for (let i = 0; i < newPlayers.length; i++) {
         const playerIndex = (dealerIndex + 1 + i) % newPlayers.length;
         const player = newPlayers[playerIndex];
-        if (player.faceUpCard!.value >= highestCardValue) {
+        if (player.faceUpCard!.value > highestCardValue) {
             highestCardValue = player.faceUpCard!.value;
+            starterIndex = playerIndex;
+        } else if (player.faceUpCard!.value === highestCardValue) {
+            // Tie-breaker: If ranks are tied, the player who was dealt their card last wins the tie
+            // Since we're going in dealing order (dealer + 1, dealer + 2, etc.), the later player wins
             starterIndex = playerIndex;
         }
     }
@@ -1151,11 +1155,17 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                   winningVote = minVote;
               }
               
+              // Rule: 0 can NEVER win - if 0 is the winning vote, use the lowest non-zero vote instead
               if (winningVote === 0) {
-                  addCommentary(`The vote is in! No cards will be swapped. Let the game begin!`);
-                  setShowGameplayStart(true);
-                  setTimeout(() => setShowGameplayStart(false), 4000);
-                  return { ...prev, players: newPlayers, gamePhase: GamePhase.GAMEPLAY, currentPlayerIndex: prev.firstPlayerToAct, roundLeaderIndex: prev.firstPlayerToAct };
+                  const nonZeroVotes = votes.filter(v => v > 0);
+                  if (nonZeroVotes.length > 0) {
+                      winningVote = Math.min(...nonZeroVotes);
+                      addCommentary(`The vote is tied at 0, but 0 can never win! Using the lowest vote: ${winningVote}.`);
+                  } else {
+                      // Fallback: if somehow all votes are 0, default to 1
+                      winningVote = 1;
+                      addCommentary(`All votes were 0, defaulting to 1 card swap.`);
+                  }
               }
 
               addCommentary(`The vote is in! Players will swap ${winningVote} card(s).`);
@@ -1609,6 +1619,25 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         console.log(`[VALIDATION] Highest played card: ${highestPlayedCard}, Highest lead card: ${highestLeadCard}, Can beat or match: ${canBeatOrMatch}`);
         
         if (canBeatOrMatch) {
+            // Additional validation for "beat and sacrifice" rule
+            if (canBeatAndSacrifice && !winningPlays.length) {
+                // Player must play a higher card + lowest cards to match count
+                const hasHigherCard = cards.some(c => c.value > leadHand[0].value);
+                const sortedHand = [...player.hand].sort((a,b) => a.value - b.value);
+                const lowestCards = sortedHand.slice(0, leadHand.length - 1); // -1 because one card is the higher card
+                const hasLowestCards = cards.filter(c => c.value <= leadHand[0].value).every(card => 
+                    lowestCards.some(lowest => lowest.rank === card.rank && lowest.suit === card.suit)
+                );
+                
+                if (hasHigherCard && hasLowestCards) {
+                    console.log("[VALIDATION] PASSED: Valid 'beat and sacrifice' play.");
+                    return true;
+                } else {
+                    console.log("[VALIDATION] FAILED: Invalid 'beat and sacrifice' - must play higher card + lowest cards.");
+                    return false;
+                }
+            }
+            
             console.log("[VALIDATION] PASSED: Player made a valid play that beats or matches the lead.");
             return true;
         }
