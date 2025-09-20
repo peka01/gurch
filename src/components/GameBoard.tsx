@@ -2633,7 +2633,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       
       {/* Human Player - Always at Bottom */}
       {gameState.players.find(player => player.isHuman) && (
-        <div className="absolute bottom-20 sm:bottom-24 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="absolute bottom-20 sm:bottom-24 left-0 right-0 flex justify-center z-10">
           <PlayerDisplay
             key={gameState.players.find(player => player.isHuman)!.id}
             player={gameState.players.find(player => player.isHuman)!}
