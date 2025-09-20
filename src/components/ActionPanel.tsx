@@ -416,14 +416,11 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
     return (
         <div 
             ref={panelRef}
-            className="fixed z-40 cursor-move"
-            style={{
-                left: position.x === 0 ? '50%' : `${position.x}px`,
-                top: position.y === 0 ? '80px' : `${position.y}px`,
-                transform: position.x === 0 ? 'translateX(-50%)' : 'none'
-            }}
-            onMouseDown={handleMouseDown}
+            className="fixed inset-0 flex items-center justify-center z-40 pointer-events-none"
         >
+            <div 
+                className="pointer-events-auto"
+            >
             <div 
                 className="bg-gradient-to-r from-amber-800/90 to-amber-900/90 backdrop-blur-md border-2 border-amber-400/70 rounded-xl shadow-2xl p-3 sm:p-4 text-center min-w-[280px] sm:min-w-[400px] max-w-[90vw] sm:max-w-[600px]"
                 style={{
@@ -431,7 +428,7 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                     backgroundImage: 'linear-gradient(to right, rgba(146, 64, 14, 0.9), rgba(120, 53, 15, 0.9))' // Fallback gradient
                 }}
             >
-                <div className="drag-handle flex items-center justify-center gap-2 sm:gap-3 mb-2 cursor-move">
+                <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
                     {timer > 0 && (
                         <div className="w-6 h-6 sm:w-8 sm:h-8 bg-red-600 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold border-2 border-white shadow-lg">
                             {timer}
@@ -441,9 +438,9 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
                         🎯
                     </div>
                     <div className="text-amber-200 text-xs sm:text-sm font-semibold">ACTION REQUIRED</div>
-                    <div className="text-amber-300 text-xs ml-1 sm:ml-2 hidden sm:block">(drag to move)</div>
                 </div>
                 {content}
+            </div>
             </div>
         </div>
     )

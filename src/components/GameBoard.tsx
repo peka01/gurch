@@ -1947,54 +1947,54 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       setTimeout(() => {
           setShowCardClearAnimation(false);
           
-          setGameState(prev => {
-              // Check if any players still have cards
-              const playersWithCards = prev.players.filter(p => p.hand.length > 0);
-              
-              console.log(`[DEBUG] startNextRound: Players with cards: ${playersWithCards.map(p => `${p.name}(${p.hand.length})`).join(', ')}`);
-              
-              if (playersWithCards.length === 0) {
-                  // No players have cards left, game is over
-                  handleGameOver(winnerId);
-                  return prev;
-              }
-              
-              if (playersWithCards.length === 1) {
-                  // Only one player has cards left, they win
-                  const winner = playersWithCards[0];
-                  addCommentary(`${winner.name} wins! All other players are out of cards.`);
-                  handleGameOver(winner.id);
-                  return prev;
-              }
+      setGameState(prev => {
+          // Check if any players still have cards
+          const playersWithCards = prev.players.filter(p => p.hand.length > 0);
+          
+          console.log(`[DEBUG] startNextRound: Players with cards: ${playersWithCards.map(p => `${p.name}(${p.hand.length})`).join(', ')}`);
+          
+          if (playersWithCards.length === 0) {
+              // No players have cards left, game is over
+              handleGameOver(winnerId);
+              return prev;
+          }
+          
+          if (playersWithCards.length === 1) {
+              // Only one player has cards left, they win
+              const winner = playersWithCards[0];
+              addCommentary(`${winner.name} wins! All other players are out of cards.`);
+              handleGameOver(winner.id);
+              return prev;
+          }
 
-              const winnerIndex = prev.players.findIndex(p => p.id === winnerId);
-              const nextLeaderIndex = winnerIndex !== -1 ? winnerIndex : prev.roundLeaderIndex;
+          const winnerIndex = prev.players.findIndex(p => p.id === winnerId);
+          const nextLeaderIndex = winnerIndex !== -1 ? winnerIndex : prev.roundLeaderIndex;
 
-              addCommentary(`${prev.players[nextLeaderIndex].name} won the last round and will start.`);
-              
-              // Clear processed decisions for the new round
-              processedDecisions.current.clear();
-              console.log(`[DEBUG] Starting new round, cleared processed decisions. Winner: ${prev.players[nextLeaderIndex].name}`);
+          addCommentary(`${prev.players[nextLeaderIndex].name} won the last round and will start.`);
+          
+          // Clear processed decisions for the new round
+          processedDecisions.current.clear();
+          console.log(`[DEBUG] Starting new round, cleared processed decisions. Winner: ${prev.players[nextLeaderIndex].name}`);
               
               // Clear all played cards and reset for next round
               const playersWithClearedCards = prev.players.map(player => ({
                   ...player,
                   playedCards: [] // Clear all played cards
               }));
-              
-              return {
-                  ...prev,
+          
+          return {
+              ...prev,
                   players: playersWithClearedCards,
-                  gamePhase: GamePhase.GAMEPLAY,
-                  currentPlayerIndex: nextLeaderIndex,
-                  roundLeaderIndex: nextLeaderIndex,
-                  cardsOnTable: [],
-                  lastPlayedHand: [],
-                  currentTrick: [],
-                  lastRoundWinnerId: winnerId,
-                  roundWinnerId: undefined
-              };
-          });
+              gamePhase: GamePhase.GAMEPLAY,
+              currentPlayerIndex: nextLeaderIndex,
+              roundLeaderIndex: nextLeaderIndex,
+              cardsOnTable: [],
+              lastPlayedHand: [],
+              currentTrick: [],
+              lastRoundWinnerId: winnerId,
+              roundWinnerId: undefined
+          };
+      });
           
           // Reset last played cards count for animations
           setLastPlayedCardsCount({});
@@ -2460,7 +2460,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
   }, [showFloatingPlayButton, gameState.gamePhase]);
 
   return (
-    <div className="relative w-full h-screen bg-gradient-to-br from-emerald-900 via-green-800 to-emerald-900 overflow-hidden">
+    <div className="relative w-full h-screen bg-gradient-to-br from-emerald-900 via-green-800 to-emerald-900 overflow-hidden" style={{ maxHeight: '100vh' }}>
       {/* Poker Table Surface */}
       <div className="absolute inset-0 flex items-center justify-center z-10">
         <div className="relative w-4/5 h-4/5 max-w-6xl max-h-5xl">
@@ -2531,12 +2531,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                 </textPath>
               </text>
             </svg>
-          </div>
         </div>
+      </div>
 
-      <button onClick={onQuit} className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-red-600 hover:bg-red-500 text-white font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-lg z-50 shadow-lg text-sm sm:text-base">
-          Quit
-      </button>
 
       {/* Draggable Commentary */}
       <DraggableCommentary commentary={gameState.commentary} />
@@ -2650,8 +2647,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             faceUpDealingCard={faceUpCards[gameState.players.find(player => player.isHuman)!.id]}
             lastPlayedCardsCount={lastPlayedCardsCount[gameState.players.find(player => player.isHuman)!.id] || 0}
           />
-        </div>
-      )}
+                </div>
+              )}
       
       {/* Human Player's Hand Cards Only */}
       <div className="absolute bottom-4 sm:bottom-6 left-0 right-0 flex justify-center z-40">
