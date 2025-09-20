@@ -347,7 +347,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
           }
           break;
         case GamePhase.VOTE_SWAP_DECISION:
-          // Let the bot thinking logic handle vote decisions
+          if (currentPlayer.wantsToVote === undefined && !currentPlayer.hasStoodPat) {
+            currentPlayer.wantsToVote = false;  // Auto-decide not to vote
+            addCommentary(`${currentPlayer.name} auto-decided to stay.`);
+          }
           break;
         case GamePhase.FINAL_SWAP_DECISION:
           if (currentPlayer.hasMadeFinalSwapDecision === undefined) {
@@ -464,15 +467,26 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                 return;
             }
             
-            // Only process if current player hasn't made a decision yet
-            if (currentPlayer.wantsToVote === undefined && !currentPlayer.hasStoodPat) {
-                if (!currentPlayer.isHuman) {
-                    console.log(`[DEBUG] Bot ${currentPlayer.name} needs to make vote decision, setting thinking state`);
-                    setGameState(prev => ({...prev, thinkingPlayerId: currentPlayer.id }));
+            // If current player has already decided, advance to next player
+            if (currentPlayer.wantsToVote !== undefined || currentPlayer.hasStoodPat) {
+                const nextPlayerIndex = findNextPlayerForDecision(gameState.players, gameState.currentPlayerIndex, 'vote');
+                if (nextPlayerIndex !== -1) {
+                    console.log(`[DEBUG] Current player decided, advancing to ${gameState.players[nextPlayerIndex].name}`);
+                    setGameState(prev => ({...prev, currentPlayerIndex: nextPlayerIndex}));
                 } else {
-                    // Human player needs to make a vote decision - wait for their input
-                    console.log(`[DEBUG] Waiting for human player ${currentPlayer.name} to make vote decision`);
+                    // No more players, let the all players decided logic above handle phase transition
+                    console.log(`[DEBUG] No more players for vote decisions, waiting for phase transition`);
                 }
+                return;
+            }
+            
+            // Only process if current player hasn't made a decision yet
+            if (!currentPlayer.isHuman) {
+                console.log(`[DEBUG] Bot ${currentPlayer.name} needs to make vote decision, setting thinking state`);
+                setGameState(prev => ({...prev, thinkingPlayerId: currentPlayer.id }));
+            } else {
+                // Human player needs to make a vote decision - wait for their input
+                console.log(`[DEBUG] Waiting for human player ${currentPlayer.name} to make vote decision`);
             }
             return;
         case GamePhase.VOTE_SWAP:
