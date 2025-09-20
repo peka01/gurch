@@ -5,7 +5,7 @@ interface DraggableCommentaryProps {
 }
 
 const DraggableCommentary: React.FC<DraggableCommentaryProps> = ({ commentary }) => {
-  const [position, setPosition] = useState({ x: window.innerWidth - 250, y: 20 });
+  const [position, setPosition] = useState({ x: window.innerWidth - 350, y: 20 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isMinimized, setIsMinimized] = useState(false);
@@ -28,8 +28,8 @@ const DraggableCommentary: React.FC<DraggableCommentaryProps> = ({ commentary })
       const newY = e.clientY - dragOffset.y;
       
       // Keep within viewport bounds
-      const maxX = window.innerWidth - 200;
-      const maxY = window.innerHeight - (isMinimized ? 40 : 120);
+      const maxX = window.innerWidth - 320; // Updated for larger box (w-80)
+      const maxY = window.innerHeight - (isMinimized ? 40 : 160); // Updated for larger height
       
       setPosition({
         x: Math.max(0, Math.min(newX, maxX)),
@@ -59,7 +59,7 @@ const DraggableCommentary: React.FC<DraggableCommentaryProps> = ({ commentary })
       ref={dragRef}
       className={`fixed z-50 bg-black/80 backdrop-blur-sm rounded-lg border border-amber-500/30 shadow-xl transition-all duration-200 ${
         isDragging ? 'cursor-grabbing' : 'cursor-grab'
-      } ${isMinimized ? 'w-48' : 'w-60'}`}
+      } ${isMinimized ? 'w-60' : 'w-80'}`}
       style={{
         backgroundColor: 'rgba(0, 0, 0, 0.8)', // Fallback black/80
         backdropFilter: 'blur(4px)', // Fallback backdrop blur
@@ -71,12 +71,12 @@ const DraggableCommentary: React.FC<DraggableCommentaryProps> = ({ commentary })
     >
       {/* Header - draggable area */}
       <div className="flex items-center justify-between p-2 border-b border-amber-500/20">
-        <div className="flex items-center text-cyan-300 text-xs font-semibold">
+        <div className="flex items-center text-cyan-300 text-sm font-semibold">
           <span className="mr-1">💬</span> Commentary
         </div>
         <button
           onClick={() => setIsMinimized(!isMinimized)}
-          className="text-amber-300 hover:text-white transition-colors text-xs px-1"
+          className="text-amber-300 hover:text-white transition-colors text-sm px-1"
         >
           {isMinimized ? '▼' : '▲'}
         </button>
@@ -84,9 +84,9 @@ const DraggableCommentary: React.FC<DraggableCommentaryProps> = ({ commentary })
 
       {/* Content */}
       {!isMinimized && (
-        <div className="p-2">
-          <div className="space-y-1 max-h-20 overflow-y-auto text-xs">
-            {commentary.slice(0, 3).map((line, index) => (
+        <div className="p-3">
+          <div className="space-y-2 max-h-32 overflow-y-auto text-sm">
+            {commentary.slice(0, 4).map((line, index) => (
               <div key={index} className={`transition-opacity duration-500 ${
                 index === 0 ? 'opacity-100 font-semibold text-white' : 'opacity-70 text-gray-300'
               }`}>

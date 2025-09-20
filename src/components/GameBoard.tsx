@@ -2517,7 +2517,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
           
           // Get position for this player's played cards based on player positions
           let cardAreaStyle: React.CSSProperties = {};
-          let cardAreaClass = "absolute w-32 h-20 sm:w-40 sm:h-24 flex flex-wrap gap-1 justify-center items-center";
+          let cardAreaClass = "absolute w-48 h-20 sm:w-64 sm:h-24 flex justify-center items-center";
           
           // Add clearing animation class
           if (showCardClearAnimation) {
@@ -2558,13 +2558,17 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                   <div 
                     key={`${player.id}-${card.rank}-${card.suit}-${cardIndex}`}
                     className={isNewlyPlayed ? "animate-toss-from-player" : ""}
-                    style={isNewlyPlayed ? {
-                      animationDelay: `${(cardIndex - (lastPlayedCardsCount[player.id] || 0)) * 0.1}s`,
-                      animationDuration: '0.8s',
-                      animationFillMode: 'forwards'
-                    } : {}}
+                    style={{
+                      zIndex: cardIndex + 10,
+                      marginLeft: cardIndex > 0 ? `-${24}px` : '0',
+                      ...(isNewlyPlayed ? {
+                        animationDelay: `${(cardIndex - (lastPlayedCardsCount[player.id] || 0)) * 0.1}s`,
+                        animationDuration: '0.8s',
+                        animationFillMode: 'forwards'
+                      } : {})
+                    }}
                   >
-                    <CardComponent card={card} />
+                    <CardComponent card={card} humanPlayer={true} />
                   </div>
                 );
               })}
@@ -2686,6 +2690,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
               <CardComponent 
                 key={`faceup-${faceUpCards[gameState.players.find(p => p.isHuman)!.id].rank}-${faceUpCards[gameState.players.find(p => p.isHuman)!.id].suit}`} 
                 card={faceUpCards[gameState.players.find(p => p.isHuman)!.id]} 
+                humanPlayer={true}
                 isPlayable={false}
               />
             )}
@@ -2721,7 +2726,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             <h3 className="text-base sm:text-lg font-bold text-black mb-2">
               Swap for this card?
             </h3>
-            <CardComponent card={gameState.revealedCard} />
+            <CardComponent card={gameState.revealedCard} humanPlayer={true} />
             
               { gameState.players[gameState.currentPlayerIndex].isHuman && (
               <>

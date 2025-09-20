@@ -26,24 +26,43 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
   if (faceDown) {
     return (
       <div
-        className={`card-component relative ${sizeClass} bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg shadow-md flex flex-col justify-center items-center p-1 transition-all duration-200 ease-in-out ${
+        className={`card-component relative ${sizeClass} rounded-lg shadow-md flex flex-col justify-center items-center p-1 transition-all duration-200 ease-in-out ${
           isSelected ? 'transform -translate-y-2 sm:-translate-y-4 ring-2 sm:ring-4 ring-cyan-400 shadow-2xl' : ''
         } ${onClick && isPlayable ? 'cursor-pointer hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-lg active:scale-95' : ''} ${
           !isPlayable ? 'opacity-60 cursor-not-allowed' : ''
         } touch-manipulation`}
         style={{
-          background: 'linear-gradient(to bottom right, #2563eb, #1e40af)', // Force blue gradient
-          backgroundColor: '#2563eb', // Fallback blue
-          border: '1px solid #1e40af', // Dark blue border
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' // Ensure shadow visibility
+          background: `
+            radial-gradient(circle at 25% 25%, #dc2626 2px, transparent 2px),
+            radial-gradient(circle at 75% 75%, #dc2626 2px, transparent 2px),
+            radial-gradient(circle at 25% 75%, #dc2626 1px, transparent 1px),
+            radial-gradient(circle at 75% 25%, #dc2626 1px, transparent 1px),
+            linear-gradient(45deg, #1e3a8a 25%, transparent 25%),
+            linear-gradient(-45deg, #1e3a8a 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #1e3a8a 75%),
+            linear-gradient(-45deg, transparent 75%, #1e3a8a 75%),
+            linear-gradient(to bottom, #1e40af, #1e3a8a)
+          `,
+          backgroundColor: '#1e40af',
+          backgroundSize: '8px 8px, 8px 8px, 6px 6px, 6px 6px, 4px 4px, 4px 4px, 4px 4px, 4px 4px, 100% 100%',
+          border: '2px solid #991b1b',
+          boxShadow: 'inset 0 0 0 1px #dc2626, 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1)'
         }}
         onClick={onClick && isPlayable ? onClick : undefined}
         title="Face down card"
       >
-        {/* Face down pattern */}
-        <div className="text-white text-lg font-bold opacity-80">
-          <div className="text-center text-2xl">🂠</div>
-          <div className="text-center text-lg mt-1">GURCH</div>
+        {/* Traditional playing card back pattern */}
+        <div className="absolute inset-2 border border-red-400 rounded flex items-center justify-center">
+          <div className="text-center">
+            {/* Traditional ornate pattern using Unicode symbols */}
+            <div className="text-red-200 text-lg leading-none">
+              <div className="grid grid-cols-3 gap-1 text-xs">
+                <span>❖</span><span>♦</span><span>❖</span>
+                <span>♦</span><span className="text-base">♠</span><span>♦</span>
+                <span>❖</span><span>♦</span><span>❖</span>
+              </div>
+            </div>
+          </div>
         </div>
         
         {/* Selection indicator for face down cards */}
