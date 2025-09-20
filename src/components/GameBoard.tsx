@@ -1607,53 +1607,50 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     const canBeatAndSacrifice = higherCards.length > 0;
     console.log(`[VALIDATION] Can 'beat and sacrifice'? ${canBeatAndSacrifice}`);
 
+    // Check if the played hand can beat or match the lead
+    const highestPlayedCard = Math.max(...cards.map(c => c.value));
+    const highestLeadCard = Math.max(...leadHand.map(c => c.value));
+    const canBeatOrMatch = highestPlayedCard >= highestLeadCard;
+    
+    console.log(`[VALIDATION] Highest played card: ${highestPlayedCard}, Highest lead card: ${highestLeadCard}, Can beat or match: ${canBeatOrMatch}`);
+    
+    // ALWAYS allow equal-value plays (same rank as lead)
+    const isEqualPlay = cards[0].value === leadHand[0].value && cards.every(c => c.rank === cards[0].rank);
+    if (isEqualPlay) {
+        console.log("[VALIDATION] PASSED: Valid equal-value play (same rank as lead).");
+        return true;
+    }
+    
+    if (canBeatOrMatch) {
+        // Additional validation for "beat and sacrifice" rule
+        if (canBeatAndSacrifice && !winningPlays.length) {
+            // Player must play a higher card + lowest cards to match count
+            const hasHigherCard = cards.some(c => c.value > leadHand[0].value);
+            const sortedHand = [...player.hand].sort((a,b) => a.value - b.value);
+            const lowestCards = sortedHand.slice(0, leadHand.length - 1); // -1 because one card is the higher card
+            const hasLowestCards = cards.filter(c => c.value <= leadHand[0].value).every(card => 
+                lowestCards.some(lowest => lowest.rank === card.rank && lowest.suit === card.suit)
+            );
+            
+            if (hasHigherCard && hasLowestCards) {
+                console.log("[VALIDATION] PASSED: Valid 'beat and sacrifice' play.");
+                return true;
+            } else {
+                console.log("[VALIDATION] FAILED: Invalid 'beat and sacrifice' - must play higher card + lowest cards.");
+                return false;
+            }
+        }
+        
+        console.log("[VALIDATION] PASSED: Player made a valid play that beats or matches the lead.");
+        return true;
+    }
+
     // A player MUST beat the hand if they are able to.
     if (winningPlays.length > 0 || canBeatAndSacrifice) {
-        console.log("[VALIDATION] Player has a winning move available and must play one.");
-
-        // Check if the played hand can beat or match the lead
-        const highestPlayedCard = Math.max(...cards.map(c => c.value));
-        const highestLeadCard = Math.max(...leadHand.map(c => c.value));
-        const canBeatOrMatch = highestPlayedCard >= highestLeadCard;
-        
-        console.log(`[VALIDATION] Highest played card: ${highestPlayedCard}, Highest lead card: ${highestLeadCard}, Can beat or match: ${canBeatOrMatch}`);
-        
-        if (canBeatOrMatch) {
-            // Additional validation for "beat and sacrifice" rule
-            if (canBeatAndSacrifice && !winningPlays.length) {
-                // Player must play a higher card + lowest cards to match count
-                const hasHigherCard = cards.some(c => c.value > leadHand[0].value);
-                const sortedHand = [...player.hand].sort((a,b) => a.value - b.value);
-                const lowestCards = sortedHand.slice(0, leadHand.length - 1); // -1 because one card is the higher card
-                const hasLowestCards = cards.filter(c => c.value <= leadHand[0].value).every(card => 
-                    lowestCards.some(lowest => lowest.rank === card.rank && lowest.suit === card.suit)
-                );
-                
-                if (hasHigherCard && hasLowestCards) {
-                    console.log("[VALIDATION] PASSED: Valid 'beat and sacrifice' play.");
-                    return true;
-                } else {
-                    console.log("[VALIDATION] FAILED: Invalid 'beat and sacrifice' - must play higher card + lowest cards.");
-                    return false;
-                }
-            }
-            
-            console.log("[VALIDATION] PASSED: Player made a valid play that beats or matches the lead.");
-            return true;
-        }
-
-        // If the player could have beaten the hand, but didn't, it's an invalid play.
         console.log("[VALIDATION] FAILED: Player had a winning move but played something else.");
         return false;
     } else if (equalPlays.length > 0) {
-        // Player has equal-value plays available, check if they played one
-        const isEqualPlay = cards[0].value === leadHand[0].value && cards.every(c => c.rank === cards[0].rank);
-        console.log(`[VALIDATION] Player has equal plays available. Is this an equal play? ${isEqualPlay}`);
-        if (isEqualPlay) {
-            console.log("[VALIDATION] PASSED: Valid equal-value play.");
-            return true;
-        }
-        
+        // Player has equal-value plays available but didn't play equal cards
         // Check if the played cards can beat or match the lead
         const highestPlayedCard = Math.max(...cards.map(c => c.value));
         const highestLeadCard = Math.max(...leadHand.map(c => c.value));
@@ -1924,9 +1921,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       });
   }
 
-  const handleGameOver = (winnerId: string) => {
-    const winner = gameState.players.find(p => p.id === winnerId);
-    if (!winner) return;
+  const handleGameOver = (playerWhoWentOutId: string) => {
+    const playerWhoWentOut = gameState.players.find(p => p.id === playerWhoWentOutId);
+    if (!playerWhoWentOut) return;
   
     const lastTrick = gameState.currentTrick;
     const scores: { [playerId: string]: number } = {};
@@ -1942,21 +1939,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       }
     });
   
-    const winnerScore = scores[winnerId];
-    delete scores[winnerId];
+    // Rule: The player who went out with the LOWEST total card value wins
+    const allScores = Object.entries(scores);
+    const minScore = Math.min(...allScores.map(([, score]) => score));
+    const maxScore = Math.max(...allScores.map(([, score]) => score));
   
-    const losers = Object.entries(scores);
-    const maxScore = Math.max(...losers.map(([, score]) => score));
-    const minScore = Math.min(...losers.map(([, score]) => score));
-  
-    const tiedLosers = losers.filter(([, score]) => score === maxScore).map(([id]) => id);
-    const tiedWinners = lastTrick.filter(p => p.cards.reduce((acc, c) => acc + c.value, 0) === winnerScore).map(p => p.playerId);
-  
-    if (tiedLosers.length > 1) {
-      addCommentary(`A minigame will decide the loser between ${tiedLosers.join(', ')}!`);
-      startMinigame(tiedLosers);
-      return;
-    }
+    const tiedWinners = allScores.filter(([, score]) => score === minScore).map(([id]) => id);
+    const tiedLosers = allScores.filter(([, score]) => score === maxScore).map(([id]) => id);
   
     if (tiedWinners.length > 1) {
       addCommentary(`A minigame will decide the winner between ${tiedWinners.join(', ')}!`);
@@ -1964,12 +1953,21 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       return;
     }
   
-    const loserId = losers.find(([, score]) => score === maxScore)![0];
-    const loser = gameState.players.find(p => p.id === loserId);
-    addCommentary(`Game Over! ${winner.name} wins! ${loser?.name} had the highest cards in the final round, awarding ${maxScore} points to ${winner.name}.`);
+    if (tiedLosers.length > 1) {
+      addCommentary(`A minigame will decide the loser between ${tiedLosers.join(', ')}!`);
+      startMinigame(tiedLosers);
+      return;
+    }
+  
+    const actualWinnerId = tiedWinners[0];
+    const actualLoserId = tiedLosers[0];
+    const actualWinner = gameState.players.find(p => p.id === actualWinnerId);
+    const actualLoser = gameState.players.find(p => p.id === actualLoserId);
+    
+    addCommentary(`Game Over! ${actualWinner?.name} wins with the lowest total (${minScore})! ${actualLoser?.name} had the highest cards in the final round (${maxScore}), awarding ${maxScore} points to ${actualWinner?.name}.`);
   
     const newPlayers = gameState.players.map(p => {
-      if (p.id === winnerId) {
+      if (p.id === actualWinnerId) {
         return { ...p, score: p.score + maxScore };
       }
       return p;
@@ -1979,8 +1977,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       ...prev, 
       players: newPlayers,
       gamePhase: GamePhase.GAME_OVER, 
-      gameWinnerId: winnerId, 
-      gameLoserId: loserId
+      gameWinnerId: actualWinnerId, 
+      gameLoserId: actualLoserId
     }));
   };
 
