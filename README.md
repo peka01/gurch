@@ -1,20 +1,11 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# DEPLOYMENT INSTRUCTIONS
 
-# Run and deploy your AI Studio app
+## Files to upload to GitHub:
 
-This contains everything you need to run your app locally.
+1. Go to: https://github.com/peka01/gurch
+2. Upload ALL files from this folder to your GitHub repository root
+3. Go to Settings > Pages
+4. Set Source to "Deploy from a branch"
+5. Set Branch to "main" and folder to "/ (root)"
 
-View your app in AI Studio: https://ai.studio/apps/drive/1LW3tJiveHo2nV5GYHkkOnunv8-rhDa3o
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Your site will be at: https://peka01.github.io/gurch/
