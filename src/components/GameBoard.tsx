@@ -373,9 +373,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     setStallCount(0);
   }, [gameState.gamePhase]);
 
-  // Clear processed decisions when game phase changes, but not for ROUND_OVER
+  // Clear processed decisions only when starting a completely new decision phase
   useEffect(() => {
-    if (gameState.gamePhase !== GamePhase.ROUND_OVER) {
+    // Only clear for phases that start new decision rounds
+    const phasesThatNeedClearing = [
+      GamePhase.DEALING,
+      GamePhase.FIRST_SWAP_DECISION, 
+      GamePhase.VOTE_SWAP_DECISION,
+      GamePhase.FINAL_SWAP_DECISION,
+      GamePhase.GAMEPLAY
+    ];
+    
+    if (phasesThatNeedClearing.includes(gameState.gamePhase)) {
       processedDecisions.current.clear();
       console.log(`[DEBUG] Cleared processed decisions for phase: ${gameState.gamePhase}`);
     }
@@ -1263,10 +1272,15 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
               return {...prev, players: newPlayers, gamePhase: GamePhase.VOTE_SWAP, currentPlayerIndex: firstVoterIndex };
           }
 
-          // Let the game loop handle advancing to the next player
-          // Don't manually advance here to prevent conflicts
-          console.log(`[DEBUG] Vote decision processed, letting game loop handle next player`);
-          return {...prev, players: newPlayers};
+          // Advance to next player who needs to make a vote decision
+          const nextPlayerIndex = findNextPlayerForDecision(newPlayers, playerIndex, 'vote');
+          if (nextPlayerIndex !== -1) {
+            console.log(`[DEBUG] Vote decision processed, advancing to ${newPlayers[nextPlayerIndex].name}`);
+            return {...prev, players: newPlayers, currentPlayerIndex: nextPlayerIndex};
+          } else {
+            console.log(`[DEBUG] Vote decision processed, no more players need to decide`);
+            return {...prev, players: newPlayers};
+          }
       });
   };
 
