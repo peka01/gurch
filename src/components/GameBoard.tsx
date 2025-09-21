@@ -2767,28 +2767,37 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             // Bot players: Use same positioning as swap cards - relative to player box
             const position = playerPositions[playerIndex];
             if (position) {
-              // Position played cards similar to swap cards - above each player's box
+              // Position played cards with proper separation on mobile
+              const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+              
               if (position.class.includes('top-')) {
                 // Top player - show cards below their box (towards center)
                 cardAreaClass += " top-20 sm:top-24 left-1/2 transform -translate-x-1/2";
               } else if (position.class.includes('left-')) {
-                // Left player - show cards to the right of their box (towards center)
-                cardAreaClass += " left-20 sm:left-24 top-1/2 transform -translate-y-1/2";
+                // Left player - ensure separation on mobile vs desktop
+                if (isMobile) {
+                  cardAreaClass += " left-4 top-1/2 transform -translate-y-1/2"; // Stay closer to left edge on mobile
+                } else {
+                  cardAreaClass += " left-20 sm:left-24 top-1/2 transform -translate-y-1/2"; // Original desktop position
+                }
               } else if (position.class.includes('right-')) {
-                // Right player - show cards to the left of their box (towards center)
-                cardAreaClass += " right-20 sm:right-24 top-1/2 transform -translate-y-1/2";
+                // Right player - ensure separation on mobile vs desktop
+                if (isMobile) {
+                  cardAreaClass += " right-4 top-1/2 transform -translate-y-1/2"; // Stay closer to right edge on mobile
+                } else {
+                  cardAreaClass += " right-20 sm:right-24 top-1/2 transform -translate-y-1/2"; // Original desktop position
+                }
               } else {
                 // Fallback - center table
                 cardAreaClass += " top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
               }
               
               // Mobile-specific spacing for played cards  
-              const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
               const isPortrait = typeof window !== 'undefined' && window.innerHeight > window.innerWidth;
               cardAreaStyle = {
                 ...cardAreaStyle,
                 gap: isMobile ? '0.25rem' : '0.25rem',
-                maxWidth: isMobile ? (isPortrait ? '85vw' : '90vw') : 'auto'
+                maxWidth: isMobile ? (isPortrait ? '40vw' : '45vw') : 'auto' // Smaller width for mobile separation
               };
             }
           }

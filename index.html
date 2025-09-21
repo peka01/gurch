@@ -107,8 +107,24 @@
           /* Mobile optimization for played cards */
           .played-cards-area {
             transform: scale(0.9); /* Slightly smaller for better fit */
-            max-width: 80vw; /* Ensure cards don't overflow screen */
             min-width: 120px; /* Maintain minimum readability */
+          }
+          
+          /* Ensure bot cards have distinct areas on mobile */
+          @media (max-width: 640px) {
+            .played-cards-area:not([class*="bottom-"]) {
+              max-width: 40vw !important; /* Smaller width to prevent overlap */
+            }
+            
+            /* Left bot cards stay on left side */
+            .played-cards-area[class*="left-"] {
+              left: 16px !important; /* Close to left edge */
+            }
+            
+            /* Right bot cards stay on right side */
+            .played-cards-area[class*="right-"] {
+              right: 16px !important; /* Close to right edge */
+            }
           }
           
           /* Slightly smaller cards for very small portrait screens */
