@@ -104,15 +104,11 @@
             max-height: calc(100dvh - 200px);
           }
           
-          /* Move bot played cards towards center in portrait mode */
+          /* Mobile optimization for played cards */
           .played-cards-area {
             transform: scale(0.9); /* Slightly smaller for better fit */
-          }
-          
-          /* Ensure bot cards stay on screen in portrait */
-          .played-cards-area:not([class*="bottom-"]) {
-            max-width: 80vw !important;
-            min-width: 120px !important;
+            max-width: 80vw; /* Ensure cards don't overflow screen */
+            min-width: 120px; /* Maintain minimum readability */
           }
           
           /* Slightly smaller cards for very small portrait screens */

@@ -2764,47 +2764,27 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             // Human player cards appear on the table above their player box
             cardAreaClass += " bottom-48 sm:bottom-52 left-1/2 transform -translate-x-1/2";
           } else {
-            // Bot players: Position based on their actual seat position around the table
+            // Bot players: Use same positioning as swap cards - relative to player box
             const position = playerPositions[playerIndex];
-            const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
-            const isPortrait = typeof window !== 'undefined' && window.innerHeight > window.innerWidth;
-            
             if (position) {
-              // For mobile portrait mode, move cards much closer to center
-              if (isMobile && isPortrait) {
-                if (position.class.includes('top-')) {
-                  // Top player - center horizontally, move up
-                  cardAreaClass += " top-1/5 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
-                } else if (position.class.includes('left-')) {
-                  // Left player - very close to center, just slightly left
-                  cardAreaClass += " top-2/5 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
-                  cardAreaStyle = { ...cardAreaStyle, marginLeft: '-100px' }; // 1.5 card widths left of center
-                } else if (position.class.includes('right-')) {
-                  // Right player - very close to center, just slightly right
-                  cardAreaClass += " top-2/5 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
-                  cardAreaStyle = { ...cardAreaStyle, marginLeft: '100px' }; // 1.5 card widths right of center
-                } else {
-                  // Fallback - center table
-                  cardAreaClass += " top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
-                }
+              // Position played cards similar to swap cards - above each player's box
+              if (position.class.includes('top-')) {
+                // Top player - show cards below their box (towards center)
+                cardAreaClass += " top-20 sm:top-24 left-1/2 transform -translate-x-1/2";
+              } else if (position.class.includes('left-')) {
+                // Left player - show cards to the right of their box (towards center)
+                cardAreaClass += " left-20 sm:left-24 top-1/2 transform -translate-y-1/2";
+              } else if (position.class.includes('right-')) {
+                // Right player - show cards to the left of their box (towards center)
+                cardAreaClass += " right-20 sm:right-24 top-1/2 transform -translate-y-1/2";
               } else {
-                // Desktop/landscape positioning - use original positions
-                if (position.class.includes('top-')) {
-                  // Top player - cards in upper center of table
-                  cardAreaClass += " top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
-                } else if (position.class.includes('left-')) {
-                  // Left player - cards in left center of table
-                  cardAreaClass += " left-1/4 top-1/2 transform -translate-x-1/2 -translate-y-1/2";
-                } else if (position.class.includes('right-')) {
-                  // Right player - cards in right center of table
-                  cardAreaClass += " right-1/4 top-1/2 transform translate-x-1/2 -translate-y-1/2";
-                } else {
-                  // Fallback - center table
-                  cardAreaClass += " top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
-                }
+                // Fallback - center table
+                cardAreaClass += " top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
               }
               
-              // Add mobile-specific spacing for played cards  
+              // Mobile-specific spacing for played cards  
+              const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+              const isPortrait = typeof window !== 'undefined' && window.innerHeight > window.innerWidth;
               cardAreaStyle = {
                 ...cardAreaStyle,
                 gap: isMobile ? '0.25rem' : '0.25rem',
