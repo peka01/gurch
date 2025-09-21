@@ -45,6 +45,28 @@
           transition: transform 0.2s ease;
         }
         
+        /* Larger played cards for better visibility on mobile */
+        .played-cards-area .card-component {
+          min-height: 176px; /* h-44 = 176px */
+          min-width: 128px;  /* w-32 = 128px */
+          transform: scale(1.1); /* 10% larger for better visibility */
+        }
+        
+        /* Adjust spacing and layout for larger played cards */
+        .played-cards-area {
+          gap: 0.25rem; /* Smaller gap to accommodate larger cards */
+          max-width: 90vw; /* Prevent overflow on mobile */
+          display: flex;
+          flex-wrap: nowrap;
+          justify-content: center;
+          align-items: center;
+        }
+        
+        /* Better visibility for multiple cards on mobile */
+        .played-cards-area > div {
+          flex-shrink: 0;
+        }
+        
         /* Enhanced touch targets */
         button, .touch-manipulation, [role="button"] {
           min-height: 44px;

@@ -2779,11 +2779,19 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                 // Fallback - center table
                 cardAreaClass += " top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
               }
+              
+              // Add mobile-specific spacing for played cards
+              const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+              cardAreaStyle = {
+                ...cardAreaStyle,
+                gap: isMobile ? '0.25rem' : '0.25rem',
+                maxWidth: isMobile ? '90vw' : 'auto'
+              };
             }
           }
           
           return (
-            <div key={`played-cards-${player.id}`} className={cardAreaClass} style={cardAreaStyle}>
+            <div key={`played-cards-${player.id}`} className={`played-cards-area ${cardAreaClass}`} style={cardAreaStyle}>
               {player.playedCards.map((card, cardIndex) => {
                 const isNewlyPlayed = cardIndex >= (lastPlayedCardsCount[player.id] || 0);
                 // Check if this card is a commander card (belongs to the first player in current trick)
@@ -2796,7 +2804,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                     className={isNewlyPlayed ? "animate-toss-from-player" : ""}
                     style={{
                       zIndex: cardIndex + 10,
-                      marginLeft: cardIndex > 0 ? `-${24}px` : '0',
+                      marginLeft: cardIndex > 0 ? (window.innerWidth < 640 ? `-${20}px` : `-${24}px`) : '0',
                       ...(isNewlyPlayed ? {
                         animationDelay: `${(cardIndex - (lastPlayedCardsCount[player.id] || 0)) * 0.1}s`,
                         animationDuration: '0.8s',
@@ -2804,7 +2812,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                       } : {})
                     }}
                   >
-                    <CardComponent card={card} humanPlayer={true} isCommander={isCommanderCard} />
+                    <CardComponent 
+                      card={card} 
+                      humanPlayer={false} 
+                      isCommander={isCommanderCard} 
+                      isPlayable={false}
+                    />
                   </div>
                 );
               })}

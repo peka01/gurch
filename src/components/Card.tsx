@@ -18,10 +18,10 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
   const colorClass = isRed ? 'text-red-500' : 'text-black';
   // Mobile-first sizing: optimized for touch and visibility
   const sizeClass = small 
-    ? 'w-16 h-24 sm:w-16 sm:h-24 text-base sm:text-base' 
+    ? 'w-20 h-28 sm:w-16 sm:h-24 text-base sm:text-base' // Slightly larger small cards on mobile
     : humanPlayer
     ? 'w-24 h-36 sm:w-24 sm:h-36 text-xl sm:text-2xl' // Mobile-optimized human cards
-    : 'w-28 h-40 sm:w-32 sm:h-44 text-2xl sm:text-3xl'; // Larger mobile cards
+    : 'w-32 h-44 sm:w-32 sm:h-44 text-2xl sm:text-3xl'; // Larger played cards for visibility
 
   // If face down, render a face-down card
   if (faceDown) {
