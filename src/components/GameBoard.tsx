@@ -2643,7 +2643,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
   }, [showFloatingPlayButton, gameState.gamePhase]);
 
   return (
-    <div className="relative w-full min-h-screen bg-gradient-to-br from-emerald-900 via-green-800 to-emerald-900 pb-20 sm:pb-0" style={{ minHeight: '100vh' }}>
+    <div className="relative w-full min-h-screen bg-gradient-to-br from-emerald-900 via-green-800 to-emerald-900 pb-32 sm:pb-0" style={{ minHeight: '100vh' }}>
       {/* Poker Table Surface */}
       <div className="absolute inset-0 flex items-center justify-center z-10">
         <div className="relative w-4/5 h-4/5 max-w-6xl max-h-5xl">
@@ -2821,7 +2821,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       
       {/* Human Player - Always at Bottom */}
       {gameState.players.find(player => player.isHuman) && (
-        <div className="absolute bottom-24 sm:bottom-24 left-0 right-0 flex justify-center z-10">
+        <div className="absolute bottom-32 sm:bottom-24 left-0 right-0 flex justify-center z-10">
           <PlayerDisplay
             key={gameState.players.find(player => player.isHuman)!.id}
             player={gameState.players.find(player => player.isHuman)!}
@@ -2885,9 +2885,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         );
       })}
         
-      {/* Human Player's Hand Cards Only */}
-      <div className="absolute bottom-12 sm:bottom-6 left-0 right-0 flex justify-center z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="flex justify-center items-center space-x-1 sm:space-x-2 bg-black/20 rounded-xl p-2 sm:p-4 backdrop-blur-sm border border-amber-500/30">
+      {/* Human Player's Hand Cards Only - Mobile Optimized */}
+      <div className="absolute bottom-16 sm:bottom-6 left-0 right-0 flex justify-center z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="flex justify-center items-center space-x-2 sm:space-x-2 bg-black/30 rounded-2xl p-4 sm:p-4 backdrop-blur-sm border border-amber-500/40 shadow-2xl touch-manipulation">
         {/* Show visual dealing cards if dealing is in progress */}
         {isDealing ? (
           <>

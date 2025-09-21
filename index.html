@@ -10,15 +10,115 @@
     <title>Gurch</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      /* Mobile-specific overrides for better card visibility */
+      /* Ultimate Mobile Experience Optimizations */
+      
+      /* Touch interactions and gestures */
+      * {
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+      
+      /* Allow text selection for inputs */
+      input, textarea, [contenteditable] {
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
+        user-select: text;
+      }
+      
+      /* Mobile-first responsive design */
       @media (max-width: 640px) {
+        /* Optimized card components */
         .card-component {
-          min-height: 80px;
-          min-width: 56px;
+          min-height: 144px; /* h-36 = 144px */
+          min-width: 96px;   /* w-24 = 96px */
+          transform-origin: center;
+          transition: transform 0.2s ease;
         }
-        /* Ensure safe area for iOS devices */
-        html {
-          padding-bottom: env(safe-area-inset-bottom);
+        
+        /* Enhanced touch targets */
+        button, .touch-manipulation, [role="button"] {
+          min-height: 44px;
+          min-width: 44px;
+          touch-action: manipulation;
+        }
+        
+        /* iOS safe areas */
+        body {
+          padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+        }
+        
+        /* Prevent viewport bounce */
+        html, body {
+          overflow-x: hidden;
+          position: fixed;
+          width: 100%;
+          height: 100%;
+        }
+        
+        #root {
+          overflow-y: auto;
+          height: 100vh;
+          width: 100vw;
+        }
+        
+        /* Better text rendering and performance on mobile */
+        body {
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          text-rendering: optimizeLegibility;
+          transform: translateZ(0); /* Force hardware acceleration */
+          backface-visibility: hidden;
+        }
+        
+        /* Performance optimizations */
+        .card-component, .floating-play-button, [class*="animate-"] {
+          transform: translateZ(0);
+          will-change: transform;
+          transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); /* Smooth easing */
+        }
+        
+        /* Faster animations on mobile for better performance */
+        .card-component {
+          transition-duration: 0.15s;
+        }
+        
+        /* Enhanced visual feedback for touch */
+        .touch-manipulation:active {
+          transform: scale(0.98);
+          transition-duration: 0.1s;
+        }
+        
+        /* Reduced motion for accessibility */
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+      }
+      
+      /* Portrait orientation optimization */
+      @media (max-width: 640px) and (orientation: portrait) {
+        .card-component {
+          transform: scale(1.1);
+        }
+      }
+      
+      /* Landscape optimization for mobile */
+      @media (max-width: 768px) and (orientation: landscape) {
+        .card-component {
+          transform: scale(0.9);
+        }
+        
+        body {
+          padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
         }
       }
     </style>
@@ -26,7 +126,7 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <script type="module" src="/index.tsx"></script>
   </head>
-  <body class="bg-gray-900 text-white" style="height: 100vh; width: 100vw; overflow-x: hidden; overflow-y: auto; padding-bottom: env(safe-area-inset-bottom);">
+  <body class="bg-gray-900 text-white" style="height: 100vh; width: 100vw; overflow-x: hidden; overflow-y: auto; padding-bottom: env(safe-area-inset-bottom); will-change: auto;">
     <div id="root"></div>
   </body>
 </html>

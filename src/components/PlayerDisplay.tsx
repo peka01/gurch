@@ -62,12 +62,12 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, 
     <div className={`${positionClass ? 'absolute transform transition-all duration-500 z-10' : 'relative'}`} style={positionStyle}>
       {/* Poker Seat Design */}
       <div 
-        className={`relative bg-gradient-to-br from-amber-800 to-amber-900 rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-2xl border-2 sm:border-4 transition-all duration-300 ${ringClass} ${useLandscapeLayout ? 'min-w-[300px] sm:min-w-[400px]' : 'min-w-[120px] sm:min-w-[200px]'}`}
+        className={`relative bg-gradient-to-br from-amber-800 to-amber-900 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xl border-2 sm:border-4 transition-all duration-300 ${ringClass} ${useLandscapeLayout ? 'min-w-[280px] sm:min-w-[400px]' : 'min-w-[140px] sm:min-w-[200px]'}`}
         style={{
           background: 'linear-gradient(to bottom right, #92400e, #78350f)', // Rich amber/brown gradient for all players
           backgroundColor: '#92400e', // Amber fallback
-          minHeight: '80px', // Ensure minimum height
-          minWidth: useLandscapeLayout ? '300px' : '120px', // Ensure minimum width
+          minHeight: '90px', // Better mobile touch target
+          minWidth: useLandscapeLayout ? '280px' : '140px', // Optimized mobile sizing
           zIndex: 5 // Ensure it's visible
         }}
       >
@@ -106,7 +106,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, 
           
           {/* Status Badge for Portrait Layout Bot Players */}
           {!useLandscapeLayout && (
-            <div className={`px-3 py-2 sm:px-4 sm:py-2 rounded-full text-sm font-bold flex items-center space-x-2 ${status.color} text-white shadow-lg ${isThinking ? 'animate-pulse' : ''}`} style={{ fontSize: '0.9rem' }}>
+            <div className={`px-4 py-2 sm:px-4 sm:py-2 rounded-full text-base font-bold flex items-center space-x-2 ${status.color} text-white shadow-lg ${isThinking ? 'animate-pulse' : ''} touch-manipulation`} style={{ fontSize: '1rem' }}>
               <span className="text-sm">{status.icon}</span>
               <span className="hidden sm:inline">{status.text}</span>
               <span className="sm:hidden">{status.text.split(' ')[0]}</span>

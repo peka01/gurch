@@ -16,12 +16,12 @@ interface CardProps {
 const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, isPlayable = true, faceDown = false, humanPlayer = false, isCommander = false }) => {
   const isRed = card.suit === '♥' || card.suit === '♦';
   const colorClass = isRed ? 'text-red-500' : 'text-black';
-  // Responsive sizing: larger cards with properly proportioned symbols
+  // Mobile-first sizing: optimized for touch and visibility
   const sizeClass = small 
-    ? 'w-14 h-20 sm:w-16 sm:h-24 text-sm sm:text-base' 
+    ? 'w-16 h-24 sm:w-16 sm:h-24 text-base sm:text-base' 
     : humanPlayer
-    ? 'w-20 h-26 sm:w-24 sm:h-36 text-lg sm:text-2xl' // 20% smaller than normal
-    : 'w-24 h-32 sm:w-32 sm:h-44 text-xl sm:text-3xl';
+    ? 'w-24 h-36 sm:w-24 sm:h-36 text-xl sm:text-2xl' // Mobile-optimized human cards
+    : 'w-28 h-40 sm:w-32 sm:h-44 text-2xl sm:text-3xl'; // Larger mobile cards
 
   // If face down, render a face-down card
   if (faceDown) {
@@ -68,7 +68,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
         
         {/* Selection indicator for face down cards */}
         {isSelected && (
-          <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-cyan-400 text-black text-base font-bold rounded-full w-6 h-6 sm:w-10 sm:h-10 flex items-center justify-center border-2 border-white">
+          <div className="absolute -top-2 -right-2 bg-cyan-400 text-black text-lg font-bold rounded-full w-10 h-10 flex items-center justify-center border-2 border-white touch-manipulation">
             ✓
           </div>
         )}
@@ -96,7 +96,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
   const getSelectionIndicator = () => {
     if (!isSelected) return null;
     return (
-      <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-cyan-400 text-black text-base font-bold rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center border-2 border-white touch-manipulation">
+      <div className="absolute -top-2 -right-2 bg-cyan-400 text-black text-lg font-bold rounded-full w-10 h-10 flex items-center justify-center border-2 border-white touch-manipulation">
         ✓
       </div>
     );
@@ -124,9 +124,9 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
       {getCardValueDisplay()}
       {getSelectionIndicator()}
       
-      <div className="text-left font-bold text-xl sm:text-2xl">{card.rank}</div>
-      <div className={`text-center font-bold ${small ? 'text-2xl sm:text-3xl' : humanPlayer ? 'text-3xl sm:text-4xl' : 'text-4xl sm:text-5xl'}`}>{card.suit}</div>
-      <div className="text-right font-bold transform rotate-180 text-xl sm:text-2xl">{card.rank}</div>
+      <div className="text-left font-bold text-2xl sm:text-2xl">{card.rank}</div>
+      <div className={`text-center font-bold ${small ? 'text-3xl sm:text-3xl' : humanPlayer ? 'text-4xl sm:text-4xl' : 'text-5xl sm:text-5xl'}`}>{card.suit}</div>
+      <div className="text-right font-bold transform rotate-180 text-2xl sm:text-2xl">{card.rank}</div>
       
       {/* Hover effect overlay */}
       {onClick && isPlayable && (

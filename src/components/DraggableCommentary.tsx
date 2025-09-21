@@ -17,7 +17,7 @@ const DraggableCommentary: React.FC<DraggableCommentaryProps> = ({ commentary })
   const [position, setPosition] = useState(getInitialPosition());
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(window.innerWidth < 640); // Start minimized on mobile
   const dragRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -85,9 +85,9 @@ const DraggableCommentary: React.FC<DraggableCommentaryProps> = ({ commentary })
   return (
     <div
       ref={dragRef}
-      className={`fixed z-50 bg-black/80 backdrop-blur-sm rounded-lg border border-amber-500/30 shadow-xl transition-all duration-200 ${
+      className={`fixed z-50 bg-black/85 backdrop-blur-md rounded-xl border border-amber-500/40 shadow-2xl transition-all duration-200 touch-manipulation ${
         isDragging ? 'cursor-grabbing' : 'cursor-grab'
-      } ${isMinimized ? 'w-60' : 'w-80'}`}
+      } ${isMinimized ? 'w-64' : 'w-80'}`}
       style={{
         backgroundColor: 'rgba(0, 0, 0, 0.8)', // Fallback black/80
         backdropFilter: 'blur(4px)', // Fallback backdrop blur
@@ -103,13 +103,13 @@ const DraggableCommentary: React.FC<DraggableCommentaryProps> = ({ commentary })
       }}
     >
       {/* Header - draggable area */}
-      <div className="flex items-center justify-between p-2 border-b border-amber-500/20">
-        <div className="flex items-center text-cyan-300 text-sm font-semibold">
-          <span className="mr-1">💬</span> Commentary
+      <div className="flex items-center justify-between p-3 border-b border-amber-500/30">
+        <div className="flex items-center text-cyan-300 text-base font-semibold">
+          <span className="mr-2">💬</span> Commentary
         </div>
         <button
           onClick={() => setIsMinimized(!isMinimized)}
-          className="text-amber-300 hover:text-white transition-colors text-sm px-1"
+          className="text-amber-300 hover:text-white transition-colors text-base px-2 py-1 rounded touch-manipulation"
         >
           {isMinimized ? '▼' : '▲'}
         </button>
@@ -117,8 +117,8 @@ const DraggableCommentary: React.FC<DraggableCommentaryProps> = ({ commentary })
 
       {/* Content */}
       {!isMinimized && (
-        <div className="p-3">
-          <div className="space-y-2 max-h-32 overflow-y-auto text-sm">
+        <div className="p-4">
+          <div className="space-y-2 max-h-36 overflow-y-auto text-base leading-relaxed">
             {commentary.slice(0, 4).map((line, index) => (
               <div key={index} className={`transition-opacity duration-500 ${
                 index === 0 ? 'opacity-100 font-semibold text-white' : 'opacity-70 text-gray-300'
