@@ -2289,12 +2289,15 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
   };
 
   const onCardClick = (card: Card) => {
-    // Prevent duplicate clicks within 100ms
+    console.log(`[MOBILE DEBUG] Card clicked: ${card.rank}${card.suit} (value: ${card.value})`);
+    
+    // Prevent duplicate clicks within 50ms (reduced for better mobile responsiveness)
     const cardKey = `${card.rank}${card.suit}`;
     const now = Date.now();
     if (lastCardClick.current && 
         lastCardClick.current.card === cardKey && 
-        now - lastCardClick.current.timestamp < 100) {
+        now - lastCardClick.current.timestamp < 50) {
+      console.log(`[MOBILE DEBUG] Duplicate click prevented for ${cardKey}`);
       return;
     }
     lastCardClick.current = { card: cardKey, timestamp: now };

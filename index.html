@@ -16,6 +16,10 @@
       * {
         -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
         -webkit-touch-callout: none;
+      }
+      
+      /* Allow user selection only where needed */
+      body, div, span, p, h1, h2, h3, h4, h5, h6 {
         -webkit-user-select: none;
         -khtml-user-select: none;
         -moz-user-select: none;
@@ -46,6 +50,13 @@
           min-height: 44px;
           min-width: 44px;
           touch-action: manipulation;
+        }
+        
+        /* Ensure card components are clickable on mobile */
+        .card-component {
+          touch-action: manipulation;
+          pointer-events: auto;
+          cursor: pointer;
         }
         
         /* iOS safe areas */
@@ -89,6 +100,11 @@
         }
         
         /* Enhanced visual feedback for touch */
+        .card-component:active {
+          transform: scale(0.98) !important;
+          transition-duration: 0.1s !important;
+        }
+        
         .touch-manipulation:active {
           transform: scale(0.98);
           transition-duration: 0.1s;

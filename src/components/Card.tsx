@@ -29,7 +29,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
       <div
         className={`card-component relative ${sizeClass} rounded-lg shadow-md flex flex-col justify-center items-center p-1 transition-all duration-200 ease-in-out ${
           isSelected ? 'transform -translate-y-2 sm:-translate-y-4 ring-2 sm:ring-4 ring-cyan-400 shadow-2xl' : ''
-        } ${onClick && isPlayable ? 'cursor-pointer hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-lg active:scale-95' : ''} ${
+        } ${onClick && isPlayable ? 'cursor-pointer hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-lg' : ''} ${
           !isPlayable ? 'opacity-60 cursor-not-allowed' : ''
         } touch-manipulation`}
         style={{
@@ -76,8 +76,12 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
     );
   }
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if(onClick && isPlayable) {
+        console.log(`[DEBUG] Card clicked: ${card.rank}${card.suit}, playable: ${isPlayable}`);
         onClick();
     }
   }
@@ -108,7 +112,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
         isCommander ? 'ring-2 ring-yellow-400 bg-yellow-50 border-yellow-400' : ''
       } ${
         isSelected ? 'transform -translate-y-2 sm:-translate-y-4 ring-2 sm:ring-4 ring-cyan-400 shadow-2xl' : ''
-      } ${onClick && isPlayable ? 'cursor-pointer hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-lg active:scale-95' : ''} ${
+      } ${onClick && isPlayable ? 'cursor-pointer hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-lg' : ''} ${
         !isPlayable ? 'opacity-60 cursor-not-allowed' : ''
       } touch-manipulation`}
       style={{
@@ -119,6 +123,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
           : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
       }}
       onClick={handleClick}
+      onTouchEnd={handleClick}
       title={`${card.rank} of ${card.suit} (Value: ${card.value})`}
     >
       {getCardValueDisplay()}
