@@ -2443,7 +2443,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             // Position button above the human player's cards area
             const buttonX = window.innerWidth / 2; // Always center horizontally
             const buttonY = isMobile 
-              ? window.innerHeight - 220 // Above cards on mobile (220px from bottom)
+              ? window.innerHeight - 180 // Above cards on mobile (180px from bottom)
               : window.innerHeight - 180; // Above cards on desktop (180px from bottom)
             setButtonPosition({ x: buttonX, y: buttonY });
           }
@@ -2666,7 +2666,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
   }, [showFloatingPlayButton, gameState.gamePhase]);
 
   return (
-    <div className="relative w-full min-h-screen bg-gradient-to-br from-emerald-900 via-green-800 to-emerald-900 pb-32 sm:pb-0" style={{ minHeight: '100vh' }}>
+    <div className="relative w-full min-h-screen bg-gradient-to-br from-emerald-900 via-green-800 to-emerald-900 pb-4 sm:pb-0" style={{ minHeight: '100dvh' }}>
       {/* Poker Table Surface */}
       <div className="absolute inset-0 flex items-center justify-center z-10">
         <div className="relative w-4/5 h-4/5 max-w-6xl max-h-5xl">
@@ -2857,7 +2857,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       
       {/* Human Player - Always at Bottom */}
       {gameState.players.find(player => player.isHuman) && (
-        <div className="absolute bottom-32 sm:bottom-24 left-0 right-0 flex justify-center z-10">
+        <div className="absolute bottom-20 sm:bottom-24 left-0 right-0 flex justify-center z-10">
           <PlayerDisplay
             key={gameState.players.find(player => player.isHuman)!.id}
             player={gameState.players.find(player => player.isHuman)!}
@@ -2922,8 +2922,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       })}
         
       {/* Human Player's Hand Cards Only - Mobile Optimized */}
-      <div className="absolute bottom-16 sm:bottom-6 left-0 right-0 flex justify-center z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="flex justify-center items-center space-x-2 sm:space-x-2 bg-black/30 rounded-2xl p-4 sm:p-4 backdrop-blur-sm border border-amber-500/40 shadow-2xl touch-manipulation">
+      <div className="absolute bottom-4 sm:bottom-6 left-0 right-0 flex justify-center z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="human-cards-container flex justify-center items-center space-x-2 sm:space-x-2 bg-black/30 rounded-2xl p-3 sm:p-4 backdrop-blur-sm border border-amber-500/40 shadow-2xl touch-manipulation">
         {/* Show visual dealing cards if dealing is in progress */}
         {isDealing ? (
           <>
