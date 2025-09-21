@@ -116,6 +116,21 @@
           transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); /* Smooth easing */
         }
         
+        /* Play button positioning near human cards */
+        .floating-play-button {
+          box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+          backdrop-filter: blur(8px);
+        }
+        
+        /* Ensure button is always visible above cards on mobile */
+        @media (max-width: 640px) {
+          .floating-play-button {
+            position: fixed;
+            z-index: 60; /* Higher than cards */
+            max-width: calc(100vw - 32px);
+          }
+        }
+        
         /* Faster animations on mobile for better performance */
         .card-component {
           transition-duration: 0.15s;

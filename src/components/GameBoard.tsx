@@ -2437,12 +2437,14 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         // Show floating play button when cards are selected during gameplay
         if (gameState.gamePhase === GamePhase.GAMEPLAY) {
           setShowFloatingPlayButton(true);
-          // Set button position to current mouse position when first card is selected
+          // Position button near human player's cards at bottom when first card is selected
           if (prev.length === 0) {
             const isMobile = window.innerWidth < 640;
-            // On mobile, position button higher and more centered for better accessibility
-            const buttonX = isMobile ? window.innerWidth / 2 : mousePosition.x;
-            const buttonY = isMobile ? window.innerHeight * 0.3 : mousePosition.y;
+            // Position button above the human player's cards area
+            const buttonX = window.innerWidth / 2; // Always center horizontally
+            const buttonY = isMobile 
+              ? window.innerHeight - 220 // Above cards on mobile (220px from bottom)
+              : window.innerHeight - 180; // Above cards on desktop (180px from bottom)
             setButtonPosition({ x: buttonX, y: buttonY });
           }
         }

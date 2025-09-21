@@ -19,12 +19,11 @@ const FloatingPlayButton: React.FC<FloatingPlayButtonProps> = ({
     const buttonHeight = isMobile ? 60 : 60; // Better touch target
     const margin = isMobile ? 16 : 20;
   
-  // Position button with mobile-specific adjustments
-  const left = Math.max(margin, Math.min(position.x + 30, window.innerWidth - buttonWidth - margin));
+  // Position button centered horizontally and above human player cards
+  const left = Math.max(margin, Math.min(position.x - (buttonWidth / 2), window.innerWidth - buttonWidth - margin));
   
-  // On mobile, position button higher up to avoid being blocked by bottom UI elements
-    const mobileVerticalOffset = isMobile ? Math.min(position.y - 100, window.innerHeight * 0.35) : position.y - 20;
-  const top = Math.max(margin, Math.min(mobileVerticalOffset, window.innerHeight - buttonHeight - margin));
+  // Position button above human player's card area
+  const top = Math.max(margin, Math.min(position.y, window.innerHeight - buttonHeight - margin));
 
   return (
     <div
@@ -32,7 +31,7 @@ const FloatingPlayButton: React.FC<FloatingPlayButtonProps> = ({
       style={{
         left: left,
         top: top,
-        transform: 'translate(-50%, -100%)'
+        transform: 'translate(0, 0)' // No additional transform needed since we're positioning directly
       }}
     >
       <button
