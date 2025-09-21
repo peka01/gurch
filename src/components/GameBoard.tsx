@@ -2766,28 +2766,49 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
           } else {
             // Bot players: Position based on their actual seat position around the table
             const position = playerPositions[playerIndex];
+            const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+            const isPortrait = typeof window !== 'undefined' && window.innerHeight > window.innerWidth;
+            
             if (position) {
-              // Determine position based on the player's seat position
-              if (position.class.includes('top-')) {
-                // Top player - cards in upper center of table
-                cardAreaClass += " top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
-              } else if (position.class.includes('left-')) {
-                // Left player - cards in left center of table
-                cardAreaClass += " left-1/4 top-1/2 transform -translate-x-1/2 -translate-y-1/2";
-              } else if (position.class.includes('right-')) {
-                // Right player - cards in right center of table
-                cardAreaClass += " right-1/4 top-1/2 transform translate-x-1/2 -translate-y-1/2";
+              // For mobile portrait mode, move cards more towards center
+              if (isMobile && isPortrait) {
+                if (position.class.includes('top-')) {
+                  // Top player - center horizontally, move up
+                  cardAreaClass += " top-1/6 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+                } else if (position.class.includes('left-')) {
+                  // Left player - move significantly towards center
+                  cardAreaClass += " top-2/5 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+                  cardAreaStyle = { ...cardAreaStyle, marginLeft: '-25vw' }; // Offset slightly left
+                } else if (position.class.includes('right-')) {
+                  // Right player - move significantly towards center  
+                  cardAreaClass += " top-2/5 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+                  cardAreaStyle = { ...cardAreaStyle, marginLeft: '25vw' }; // Offset slightly right
+                } else {
+                  // Fallback - center table
+                  cardAreaClass += " top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+                }
               } else {
-                // Fallback - center table
-                cardAreaClass += " top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+                // Desktop/landscape positioning - use original positions
+                if (position.class.includes('top-')) {
+                  // Top player - cards in upper center of table
+                  cardAreaClass += " top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+                } else if (position.class.includes('left-')) {
+                  // Left player - cards in left center of table
+                  cardAreaClass += " left-1/4 top-1/2 transform -translate-x-1/2 -translate-y-1/2";
+                } else if (position.class.includes('right-')) {
+                  // Right player - cards in right center of table
+                  cardAreaClass += " right-1/4 top-1/2 transform translate-x-1/2 -translate-y-1/2";
+                } else {
+                  // Fallback - center table
+                  cardAreaClass += " top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+                }
               }
               
-              // Add mobile-specific spacing for played cards
-              const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+              // Add mobile-specific spacing for played cards  
               cardAreaStyle = {
                 ...cardAreaStyle,
                 gap: isMobile ? '0.25rem' : '0.25rem',
-                maxWidth: isMobile ? '90vw' : 'auto'
+                maxWidth: isMobile ? (isPortrait ? '85vw' : '90vw') : 'auto'
               };
             }
           }
