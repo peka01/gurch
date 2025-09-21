@@ -21,7 +21,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
     ? 'w-16 h-24 sm:w-16 sm:h-24 text-base sm:text-base' // Optimized small cards
     : humanPlayer
     ? 'w-24 h-36 sm:w-24 sm:h-36 text-xl sm:text-2xl' // Mobile-optimized human cards
-    : 'w-28 h-40 sm:w-32 sm:h-44 text-xl sm:text-2xl'; // Optimal bot cards for mobile visibility
+    : 'w-14 h-20 sm:w-32 sm:h-44 text-sm sm:text-2xl'; // Compact bot cards for mobile space efficiency
 
   // If face down, render a face-down card
   if (faceDown) {
@@ -129,9 +129,9 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
       {getCardValueDisplay()}
       {getSelectionIndicator()}
       
-      <div className="text-left font-bold text-2xl sm:text-2xl">{card.rank}</div>
-      <div className={`text-center font-bold ${small ? 'text-3xl sm:text-3xl' : humanPlayer ? 'text-4xl sm:text-4xl' : 'text-4xl sm:text-5xl'}`}>{card.suit}</div>
-      <div className="text-right font-bold transform rotate-180 text-2xl sm:text-2xl">{card.rank}</div>
+      <div className="text-left font-bold text-sm sm:text-2xl">{card.rank}</div>
+      <div className={`text-center font-bold ${small ? 'text-3xl sm:text-3xl' : humanPlayer ? 'text-4xl sm:text-4xl' : 'text-2xl sm:text-5xl'}`}>{card.suit}</div>
+      <div className="text-right font-bold transform rotate-180 text-sm sm:text-2xl">{card.rank}</div>
       
       {/* Hover effect overlay */}
       {onClick && isPlayable && (

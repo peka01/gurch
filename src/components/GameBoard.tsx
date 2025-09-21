@@ -2786,8 +2786,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
               const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
               cardAreaStyle = {
                 ...cardAreaStyle,
-                gap: isMobile ? '0.5rem' : '0.25rem',
-                maxWidth: isMobile ? '95vw' : 'auto'
+                gap: isMobile ? '0.25rem' : '0.25rem',
+                maxWidth: isMobile ? '90vw' : 'auto'
               };
             }
           }
@@ -2806,7 +2806,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                     className={isNewlyPlayed ? "animate-toss-from-player" : ""}
                     style={{
                       zIndex: cardIndex + 10,
-                      marginLeft: cardIndex > 0 ? (window.innerWidth < 640 ? `-${12}px` : `-${24}px`) : '0',
+                      marginLeft: cardIndex > 0 ? (window.innerWidth < 640 ? `-${8}px` : `-${24}px`) : '0',
                       ...(isNewlyPlayed ? {
                         animationDelay: `${(cardIndex - (lastPlayedCardsCount[player.id] || 0)) * 0.1}s`,
                         animationDuration: '0.8s',

@@ -45,23 +45,23 @@
           transition: transform 0.2s ease;
         }
         
-        /* Bot cards get optimal mobile sizing */
+        /* Bot cards get compact mobile sizing */
         .card-component:not(.human-card) {
-          min-height: 160px; /* h-40 = 160px for bot cards */
-          min-width: 112px;  /* w-28 = 112px for bot cards */
+          min-height: 80px;  /* h-20 = 80px for bot cards */
+          min-width: 56px;   /* w-14 = 56px for bot cards */
         }
         
-        /* Optimized played cards for mobile visibility and space efficiency */
+        /* Optimized played cards for mobile - much smaller for space efficiency */
         .played-cards-area .card-component {
-          min-height: 160px; /* h-40 = 160px */
-          min-width: 112px;  /* w-28 = 112px */
-          transform: scale(1.05); /* 5% larger for visibility without overwhelming */
+          min-height: 80px;  /* h-20 = 80px - half the previous size */
+          min-width: 56px;   /* w-14 = 56px - half the previous size */
+          transform: scale(1.0); /* No additional scaling needed */
         }
         
-        /* Adjust spacing and layout for optimized played cards */
+        /* Adjust spacing and layout for compact played cards */
         .played-cards-area {
-          gap: 0.5rem; /* Better spacing for readability */
-          max-width: 95vw; /* Optimized mobile width */
+          gap: 0.25rem; /* Compact spacing for smaller cards */
+          max-width: 90vw; /* Optimized mobile width */
           display: flex;
           flex-wrap: nowrap;
           justify-content: center;
