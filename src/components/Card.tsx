@@ -18,16 +18,16 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
   const colorClass = isRed ? 'text-red-500' : 'text-black';
   // Mobile-first sizing: optimized for touch and visibility
   const sizeClass = small 
-    ? 'w-20 h-28 sm:w-16 sm:h-24 text-base sm:text-base' // Slightly larger small cards on mobile
+    ? 'w-16 h-24 sm:w-16 sm:h-24 text-base sm:text-base' // Optimized small cards
     : humanPlayer
     ? 'w-24 h-36 sm:w-24 sm:h-36 text-xl sm:text-2xl' // Mobile-optimized human cards
-    : 'w-32 h-44 sm:w-32 sm:h-44 text-2xl sm:text-3xl'; // Larger played cards for visibility
+    : 'w-28 h-40 sm:w-32 sm:h-44 text-xl sm:text-2xl'; // Optimal bot cards for mobile visibility
 
   // If face down, render a face-down card
   if (faceDown) {
     return (
       <div
-        className={`card-component relative ${sizeClass} rounded-lg shadow-md flex flex-col justify-center items-center p-1 transition-all duration-200 ease-in-out ${
+        className={`card-component ${humanPlayer ? 'human-card' : ''} relative ${sizeClass} rounded-lg shadow-md flex flex-col justify-center items-center p-1 transition-all duration-200 ease-in-out ${
           isSelected ? 'transform -translate-y-2 sm:-translate-y-4 ring-2 sm:ring-4 ring-cyan-400 shadow-2xl' : ''
         } ${onClick && isPlayable ? 'cursor-pointer hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-lg' : ''} ${
           !isPlayable ? 'opacity-60 cursor-not-allowed' : ''
@@ -108,7 +108,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
 
   return (
     <div
-      className={`card-component relative ${sizeClass} bg-white rounded-lg shadow-md flex flex-col justify-between p-1 transition-all duration-200 ease-in-out ${colorClass} ${
+      className={`card-component ${humanPlayer ? 'human-card' : ''} relative ${sizeClass} bg-white rounded-lg shadow-md flex flex-col justify-between p-1 transition-all duration-200 ease-in-out ${colorClass} ${
         isCommander ? 'ring-2 ring-yellow-400 bg-yellow-50 border-yellow-400' : ''
       } ${
         isSelected ? 'transform -translate-y-2 sm:-translate-y-4 ring-2 sm:ring-4 ring-cyan-400 shadow-2xl' : ''
@@ -130,7 +130,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
       {getSelectionIndicator()}
       
       <div className="text-left font-bold text-2xl sm:text-2xl">{card.rank}</div>
-      <div className={`text-center font-bold ${small ? 'text-3xl sm:text-3xl' : humanPlayer ? 'text-4xl sm:text-4xl' : 'text-5xl sm:text-5xl'}`}>{card.suit}</div>
+      <div className={`text-center font-bold ${small ? 'text-3xl sm:text-3xl' : humanPlayer ? 'text-4xl sm:text-4xl' : 'text-4xl sm:text-5xl'}`}>{card.suit}</div>
       <div className="text-right font-bold transform rotate-180 text-2xl sm:text-2xl">{card.rank}</div>
       
       {/* Hover effect overlay */}

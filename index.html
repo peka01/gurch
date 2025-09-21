@@ -37,25 +37,31 @@
       
       /* Mobile-first responsive design */
       @media (max-width: 640px) {
-        /* Optimized card components */
+        /* Optimized card components for mobile */
         .card-component {
-          min-height: 144px; /* h-36 = 144px */
-          min-width: 96px;   /* w-24 = 96px */
+          min-height: 144px; /* h-36 = 144px for human cards */
+          min-width: 96px;   /* w-24 = 96px for human cards */
           transform-origin: center;
           transition: transform 0.2s ease;
         }
         
-        /* Larger played cards for better visibility on mobile */
-        .played-cards-area .card-component {
-          min-height: 176px; /* h-44 = 176px */
-          min-width: 128px;  /* w-32 = 128px */
-          transform: scale(1.1); /* 10% larger for better visibility */
+        /* Bot cards get optimal mobile sizing */
+        .card-component:not(.human-card) {
+          min-height: 160px; /* h-40 = 160px for bot cards */
+          min-width: 112px;  /* w-28 = 112px for bot cards */
         }
         
-        /* Adjust spacing and layout for larger played cards */
+        /* Optimized played cards for mobile visibility and space efficiency */
+        .played-cards-area .card-component {
+          min-height: 160px; /* h-40 = 160px */
+          min-width: 112px;  /* w-28 = 112px */
+          transform: scale(1.05); /* 5% larger for visibility without overwhelming */
+        }
+        
+        /* Adjust spacing and layout for optimized played cards */
         .played-cards-area {
-          gap: 0.25rem; /* Smaller gap to accommodate larger cards */
-          max-width: 90vw; /* Prevent overflow on mobile */
+          gap: 0.5rem; /* Better spacing for readability */
+          max-width: 95vw; /* Optimized mobile width */
           display: flex;
           flex-wrap: nowrap;
           justify-content: center;
