@@ -2692,7 +2692,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       </div>
       
         {/* Gurch Crown Logo - Embroidered on Table Cloth */}
-        <div className="absolute inset-0 flex items-center justify-center z-5">
+        <div className="absolute inset-0 flex items-center justify-center z-11">
           <div className="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center">
             {/* Font Awesome Crown - Bright Yellow Filled */}
             <i 
@@ -2879,7 +2879,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       
       {/* Human Player - Always at Bottom */}
       {gameState.players.find(player => player.isHuman) && (
-        <div className="absolute left-0 right-0 flex justify-center z-10" style={{ bottom: typeof window !== 'undefined' && window.innerWidth < 640 ? '80px' : '96px' }}>
+        <div className="absolute left-0 right-0 flex justify-center z-12" style={{ bottom: typeof window !== 'undefined' && window.innerWidth < 640 ? '80px' : '96px' }}>
           <PlayerDisplay
             key={gameState.players.find(player => player.isHuman)!.id}
             player={gameState.players.find(player => player.isHuman)!}

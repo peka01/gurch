@@ -59,7 +59,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, 
   const status = getPlayerStatus();
 
   return (
-    <div className={`${positionClass ? 'absolute transform transition-all duration-500 z-10' : 'relative'}`} style={positionStyle}>
+    <div className={`${positionClass ? 'absolute transform transition-all duration-500 z-12' : 'relative'}`} style={positionStyle}>
       {/* Poker Seat Design */}
       <div 
         className={`relative bg-gradient-to-br from-amber-800 to-amber-900 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xl border-2 sm:border-4 transition-all duration-300 ${ringClass} ${useLandscapeLayout ? 'min-w-[280px] sm:min-w-[400px]' : 'min-w-[140px] sm:min-w-[200px]'}`}
@@ -68,7 +68,7 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, 
           backgroundColor: '#92400e', // Amber fallback
           minHeight: '90px', // Better mobile touch target
           minWidth: useLandscapeLayout ? '280px' : '140px', // Optimized mobile sizing
-          zIndex: 5 // Ensure it's visible
+          zIndex: 12 // Above centerpiece logo
         }}
       >
         
