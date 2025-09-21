@@ -2,18 +2,31 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1f2937">
     <title>Gurch</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Mobile-specific overrides for better card visibility */
+      @media (max-width: 640px) {
+        .card-component {
+          min-height: 80px;
+          min-width: 56px;
+        }
+        /* Ensure safe area for iOS devices */
+        html {
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+      }
+    </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <script type="module" src="/index.tsx"></script>
   </head>
-  <body class="bg-gray-900 text-white overflow-hidden h-screen w-screen">
+  <body class="bg-gray-900 text-white" style="height: 100vh; width: 100vw; overflow-x: hidden; overflow-y: auto; padding-bottom: env(safe-area-inset-bottom);">
     <div id="root"></div>
   </body>
 </html>
