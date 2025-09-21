@@ -30,7 +30,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
         className={`card-component ${humanPlayer ? 'human-card' : ''} relative ${sizeClass} rounded-lg shadow-md flex flex-col justify-center items-center p-1 transition-all duration-200 ease-in-out ${
           isSelected ? 'transform -translate-y-2 sm:-translate-y-4 ring-2 sm:ring-4 ring-cyan-400 shadow-2xl' : ''
         } ${onClick && isPlayable ? 'cursor-pointer hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-lg' : ''} ${
-          !isPlayable ? 'opacity-60 cursor-not-allowed' : ''
+          !isPlayable ? 'cursor-not-allowed' : ''
         } touch-manipulation`}
         style={{
           background: `
@@ -113,7 +113,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
       } ${
         isSelected ? 'transform -translate-y-2 sm:-translate-y-4 ring-2 sm:ring-4 ring-cyan-400 shadow-2xl' : ''
       } ${onClick && isPlayable ? 'cursor-pointer hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-lg' : ''} ${
-        !isPlayable ? 'opacity-60 cursor-not-allowed' : ''
+        !isPlayable ? 'cursor-not-allowed' : ''
       } touch-manipulation`}
       style={{
         backgroundColor: isCommander ? '#fefce8' : '#ffffff', // Yellow bg for commander cards, white for regular cards
@@ -135,7 +135,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
       
       {/* Hover effect overlay */}
       {onClick && isPlayable && (
-        <div className="absolute inset-0 bg-cyan-200 opacity-0 hover:opacity-20 rounded-lg transition-opacity duration-200 pointer-events-none" />
+        <div className="absolute inset-0 bg-cyan-200 opacity-0 hover:opacity-10 rounded-lg transition-opacity duration-200 pointer-events-none" />
       )}
     </div>
   );
