@@ -109,15 +109,19 @@
             transform: scale(0.9); /* Slightly smaller for better fit */
           }
           
-          /* Better centering for bot cards in portrait */
+          /* Ensure bot cards stay on screen in portrait */
           .played-cards-area:not([class*="bottom-"]) {
-            /* Ensure cards don't go too far to edges */
-            max-width: 80vw !important;
+            max-width: 75vw !important;
+            min-width: 120px !important;
           }
           
-          /* Specific positioning adjustments for portrait */
-          .played-cards-area[class*="top-"] {
-            top: 15% !important; /* Move top cards down slightly */
+          /* Adjust positioning to keep cards visible */
+          .played-cards-area[class*="left-"] {
+            left: 20% !important; /* Keep left cards from going off screen */
+          }
+          
+          .played-cards-area[class*="right-"] {
+            right: 20% !important; /* Keep right cards from going off screen */
           }
           
           /* Slightly smaller cards for very small portrait screens */

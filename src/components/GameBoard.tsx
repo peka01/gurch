@@ -2774,15 +2774,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
               if (isMobile && isPortrait) {
                 if (position.class.includes('top-')) {
                   // Top player - center horizontally, move up
-                  cardAreaClass += " top-1/6 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+                  cardAreaClass += " top-1/5 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
                 } else if (position.class.includes('left-')) {
-                  // Left player - move significantly towards center
-                  cardAreaClass += " top-2/5 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
-                  cardAreaStyle = { ...cardAreaStyle, marginLeft: '-25vw' }; // Offset slightly left
+                  // Left player - move towards center-left but keep on screen
+                  cardAreaClass += " top-2/5 left-1/3 transform -translate-x-1/2 -translate-y-1/2";
                 } else if (position.class.includes('right-')) {
-                  // Right player - move significantly towards center  
-                  cardAreaClass += " top-2/5 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
-                  cardAreaStyle = { ...cardAreaStyle, marginLeft: '25vw' }; // Offset slightly right
+                  // Right player - move towards center-right but keep on screen  
+                  cardAreaClass += " top-2/5 right-1/3 transform translate-x-1/2 -translate-y-1/2";
                 } else {
                   // Fallback - center table
                   cardAreaClass += " top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
