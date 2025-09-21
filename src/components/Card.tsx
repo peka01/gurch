@@ -96,7 +96,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
   const getSelectionIndicator = () => {
     if (!isSelected) return null;
     return (
-      <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-cyan-400 text-black text-base font-bold rounded-full w-6 h-6 sm:w-10 sm:h-10 flex items-center justify-center border-2 border-white">
+      <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-cyan-400 text-black text-base font-bold rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center border-2 border-white touch-manipulation">
         ✓
       </div>
     );

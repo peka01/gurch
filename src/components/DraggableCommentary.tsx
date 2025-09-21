@@ -5,7 +5,16 @@ interface DraggableCommentaryProps {
 }
 
 const DraggableCommentary: React.FC<DraggableCommentaryProps> = ({ commentary }) => {
-  const [position, setPosition] = useState({ x: window.innerWidth - 350, y: 20 });
+  // Mobile-friendly initial positioning
+  const getInitialPosition = () => {
+    const isMobile = window.innerWidth < 640; // sm breakpoint
+    return {
+      x: isMobile ? 10 : window.innerWidth - 350, // Left edge on mobile, right edge on desktop
+      y: isMobile ? 10 : 20 // Top edge with small margin
+    };
+  };
+  
+  const [position, setPosition] = useState(getInitialPosition());
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isMinimized, setIsMinimized] = useState(false);
@@ -27,13 +36,18 @@ const DraggableCommentary: React.FC<DraggableCommentaryProps> = ({ commentary })
       const newX = e.clientX - dragOffset.x;
       const newY = e.clientY - dragOffset.y;
       
-      // Keep within viewport bounds
-      const maxX = window.innerWidth - 320; // Updated for larger box (w-80)
-      const maxY = window.innerHeight - (isMinimized ? 40 : 160); // Updated for larger height
+      // Mobile-friendly viewport bounds with responsive margins
+      const isMobile = window.innerWidth < 640;
+      const margin = isMobile ? 10 : 20;
+      const boxWidth = isMinimized ? 240 : 320; // w-60 = 240px, w-80 = 320px
+      const boxHeight = isMinimized ? 40 : 160;
+      
+      const maxX = window.innerWidth - boxWidth - margin;
+      const maxY = window.innerHeight - boxHeight - margin;
       
       setPosition({
-        x: Math.max(0, Math.min(newX, maxX)),
-        y: Math.max(0, Math.min(newY, maxY))
+        x: Math.max(margin, Math.min(newX, maxX)),
+        y: Math.max(margin, Math.min(newY, maxY))
       });
     }
   };
@@ -44,15 +58,29 @@ const DraggableCommentary: React.FC<DraggableCommentaryProps> = ({ commentary })
 
   useEffect(() => {
     if (isDragging) {
+      const handleTouchMove = (e: TouchEvent) => {
+        e.preventDefault(); // Prevent scrolling while dragging
+        const touch = e.touches[0];
+        handleMouseMove({ clientX: touch.clientX, clientY: touch.clientY } as MouseEvent);
+      };
+      
+      const handleTouchEnd = () => {
+        handleMouseUp();
+      };
+      
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
       
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
       };
     }
-  }, [isDragging, dragOffset]);
+  }, [isDragging, dragOffset, isMinimized]);
 
   return (
     <div
@@ -68,6 +96,11 @@ const DraggableCommentary: React.FC<DraggableCommentaryProps> = ({ commentary })
         transform: isDragging ? 'scale(1.02)' : 'scale(1)'
       }}
       onMouseDown={handleMouseDown}
+      onTouchStart={(e) => {
+        // Touch support for mobile devices
+        const touch = e.touches[0];
+        handleMouseDown({ clientX: touch.clientX, clientY: touch.clientY, preventDefault: () => {} } as any);
+      }}
     >
       {/* Header - draggable area */}
       <div className="flex items-center justify-between p-2 border-b border-amber-500/20">
