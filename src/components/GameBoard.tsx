@@ -1648,7 +1648,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         console.log("[VALIDATION] PASSED: Valid equal-value play (same value as lead).");
         return true;
     }
-    
+
     // Check if the played hand can beat or match the lead
     const highestPlayedCard = Math.max(...cards.map(c => c.value));
     const highestLeadCard = Math.max(...leadHand.map(c => c.value));
@@ -1662,9 +1662,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         
         if (allCardsBeatLead && cards.every(c => c.rank === cards[0].rank)) {
             console.log("[VALIDATION] PASSED: All played cards beat or match the lead with same rank.");
-            return true;
-        }
-        
+        return true;
+    }
+    
         // Apply "beat/equal and sacrifice" rule if player has higher/equal cards but can't make a valid set
         if ((canBeatAndSacrifice || equalPlays.length > 0) && winningPlays.length === 0) {
             // Player must play a higher/equal card + lowest cards to match count
@@ -1820,7 +1820,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     // Return the worst cards up to the count needed
     return cardScores.slice(0, Math.min(count, cardScores.length)).map(item => item.card);
   };
-
+  
   const findBestPlayForBot = (hand: Card[], leadHand: Card[]): Card[] => {
     // Safety check: ensure we have cards to play
     if (!hand || hand.length === 0) {
@@ -2398,8 +2398,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
             
             // Check if this could be an "equal and sacrifice" play
             const hasEqualCardInSelection = newSelection.some(c => c.value === highestLeadCard);
-            const sortedHand = [...humanPlayer.hand].sort((a, b) => a.value - b.value);
-            const lowestCards = sortedHand.slice(0, leadHand.length);
+                const sortedHand = [...humanPlayer.hand].sort((a, b) => a.value - b.value);
+                const lowestCards = sortedHand.slice(0, leadHand.length);
             const isSelectingLowestOrEqual = lowestCards.some(c => c.rank === card.rank && c.suit === card.suit) || 
                                            card.value === highestLeadCard;
             
@@ -2692,7 +2692,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       </div>
       
         {/* Gurch Crown Logo - Embroidered on Table Cloth */}
-        <div className="absolute inset-0 flex items-center justify-center z-0">
+        <div className="absolute inset-0 flex items-center justify-center z-5">
           <div className="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center">
             {/* Font Awesome Crown - Bright Yellow Filled */}
             <i 
@@ -2751,7 +2751,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
           
           // Get position for this player's played cards based on player positions
           let cardAreaStyle: React.CSSProperties = {};
-          let cardAreaClass = "absolute w-48 h-20 sm:w-64 sm:h-24 flex justify-center items-center";
+          let cardAreaClass = "absolute w-20 h-20 sm:w-24 sm:h-24 flex justify-center items-center";
           
           // Add clearing animation class
           if (showCardClearAnimation) {
@@ -2761,43 +2761,55 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
           }
           
           if (isHuman) {
-            // Human player cards appear on the table above their player box
+            // Human player cards appear in visible area above action panel on mobile
+            const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+            if (isMobile) {
+              cardAreaClass += " left-1/2 transform -translate-x-1/2";
+              cardAreaStyle = { 
+                ...cardAreaStyle, 
+                bottom: '180px', // Closer to player box
+                zIndex: 45 // Above action panel
+              };
+            } else {
             cardAreaClass += " bottom-48 sm:bottom-52 left-1/2 transform -translate-x-1/2";
+            }
           } else {
             // Bot players: Use same positioning as swap cards - relative to player box
             const position = playerPositions[playerIndex];
             if (position) {
-              // Position played cards with proper separation on mobile
-              const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
-              
+              // Position played cards above bot player boxes
               if (position.class.includes('top-')) {
                 // Top player - show cards below their box (towards center)
-                cardAreaClass += " top-20 sm:top-24 left-1/2 transform -translate-x-1/2";
+                cardAreaClass += " top-24 sm:top-28 left-1/2 transform -translate-x-1/2";
               } else if (position.class.includes('left-')) {
-                // Left player - ensure separation on mobile vs desktop
+                // Left player - position cards to the right side of their box on big screens
+                const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
                 if (isMobile) {
-                  cardAreaClass += " left-4 top-1/2 transform -translate-y-1/2"; // Stay closer to left edge on mobile
+                  cardAreaClass += " left-2 top-52 transform translate-x-0"; // Keep mobile positioning
                 } else {
-                  cardAreaClass += " left-20 sm:left-24 top-1/2 transform -translate-y-1/2"; // Original desktop position
+                  cardAreaClass += " left-48 top-1/2 transform -translate-y-1/2"; // To the side on desktop
                 }
               } else if (position.class.includes('right-')) {
-                // Right player - ensure separation on mobile vs desktop
+                // Right player - position cards to the left side of their box on big screens  
+                const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
                 if (isMobile) {
-                  cardAreaClass += " right-4 top-1/2 transform -translate-y-1/2"; // Stay closer to right edge on mobile
+                  cardAreaClass += " right-2 top-52 transform -translate-x-0"; // Keep mobile positioning
                 } else {
-                  cardAreaClass += " right-20 sm:right-24 top-1/2 transform -translate-y-1/2"; // Original desktop position
+                  cardAreaClass += " right-48 top-1/2 transform -translate-y-1/2"; // To the side on desktop
                 }
               } else {
                 // Fallback - center table
                 cardAreaClass += " top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
               }
               
-              // Mobile-specific spacing for played cards  
+              // Responsive spacing for played cards  
+              const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
               const isPortrait = typeof window !== 'undefined' && window.innerHeight > window.innerWidth;
               cardAreaStyle = {
                 ...cardAreaStyle,
-                gap: isMobile ? '0.25rem' : '0.25rem',
-                maxWidth: isMobile ? (isPortrait ? '40vw' : '45vw') : 'auto' // Smaller width for mobile separation
+                gap: '0',  // Remove gap to allow more overlap
+                maxWidth: isMobile ? '80px' : '200px', // More space on desktop for side positioning
+                overflow: 'visible'
               };
             }
           }
@@ -2816,11 +2828,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                     className={isNewlyPlayed ? "animate-toss-from-player" : ""}
                     style={{
                       zIndex: cardIndex + 10,
-                      marginLeft: cardIndex > 0 ? (window.innerWidth < 640 ? `-${8}px` : `-${24}px`) : '0',
+                      marginLeft: cardIndex > 0 ? (window.innerWidth < 640 ? `-${45}px` : `-${30}px`) : '0',
                       ...(isNewlyPlayed ? {
-                        animationDelay: `${(cardIndex - (lastPlayedCardsCount[player.id] || 0)) * 0.1}s`,
-                        animationDuration: '0.8s',
-                        animationFillMode: 'forwards'
+                      animationDelay: `${(cardIndex - (lastPlayedCardsCount[player.id] || 0)) * 0.1}s`,
+                      animationDuration: '0.8s',
+                      animationFillMode: 'forwards'
                       } : {})
                     }}
                   >
@@ -2867,7 +2879,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       
       {/* Human Player - Always at Bottom */}
       {gameState.players.find(player => player.isHuman) && (
-        <div className="absolute bottom-20 sm:bottom-24 left-0 right-0 flex justify-center z-10">
+        <div className="absolute left-0 right-0 flex justify-center z-10" style={{ bottom: typeof window !== 'undefined' && window.innerWidth < 640 ? '80px' : '96px' }}>
           <PlayerDisplay
             key={gameState.players.find(player => player.isHuman)!.id}
             player={gameState.players.find(player => player.isHuman)!}
@@ -2895,18 +2907,55 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
 
         let dealingAreaClass = "absolute flex justify-center items-center space-x-1 z-50";
         
-        // Position dealing cards outside each bot's player box
+        // Optimized dealing cards positioning for mobile
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+        
         if (position.class.includes('top-')) {
-          dealingAreaClass += " top-40 left-1/2 transform -translate-x-1/2";
+          if (isMobile) {
+            dealingAreaClass += " top-16 left-1/2 transform -translate-x-1/2"; // Closer to top on mobile
+          } else {
+            dealingAreaClass += " top-20 sm:top-24 left-1/2 transform -translate-x-1/2";
+          }
         } else if (position.class.includes('left-')) {
-          dealingAreaClass += " left-60 top-1/2 transform -translate-y-1/2";
+          if (isMobile) {
+            dealingAreaClass += " left-2 top-32 transform translate-x-0"; // Optimized mobile position
+          } else {
+            dealingAreaClass += " left-2 sm:left-4 top-40 sm:top-44 transform translate-x-0";
+          }
         } else if (position.class.includes('right-')) {
-          dealingAreaClass += " right-60 top-1/2 transform -translate-y-1/2";
+          if (isMobile) {
+            dealingAreaClass += " right-2 top-32 transform -translate-x-0"; // Optimized mobile position
+          } else {
+            dealingAreaClass += " right-2 sm:right-4 top-40 sm:top-44 transform -translate-x-0";
+          }
         }
 
+        // Player-specific styling for visual differentiation
+        const isBot1 = player.id === 'bot1';
+        const isBot2 = player.id === 'bot2';
+        const isTopBot = position.class.includes('top-');
+        
+        // UX Design: Color-coded containers for clear ownership
+        const playerBorderColor = isBot1 ? 'border-blue-400/70' : isBot2 ? 'border-green-400/70' : 'border-amber-500/40';
+        const playerBgGradient = isBot1 ? 'bg-gradient-to-r from-blue-900/30 to-black/30' : isBot2 ? 'bg-gradient-to-r from-green-900/30 to-black/30' : 'bg-black/30';
+        const playerShadow = isBot1 ? 'shadow-blue-500/20' : isBot2 ? 'shadow-green-500/20' : 'shadow-amber-500/20';
+
         return (
-          <div key={`bot-dealing-${player.id}`} className={dealingAreaClass}>
-            <div className="flex justify-center items-center space-x-1 bg-black/20 rounded-xl p-2 backdrop-blur-sm border border-amber-500/30">
+          <div key={`bot-dealing-${player.id}`} className={`${dealingAreaClass} bot-dealing-area relative`}>
+            {/* Player ownership indicator */}
+            <div className={`absolute -top-2 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs font-bold rounded-md ${isBot1 ? 'bg-blue-600 text-white' : 'bg-green-600 text-white'} shadow-lg z-10`}>
+              {player.name}
+            </div>
+            <div className={`flex justify-center items-center space-x-1 ${playerBgGradient} rounded-xl p-2 sm:p-2 backdrop-blur-sm border-2 ${playerBorderColor} shadow-lg ${playerShadow}`} style={{ minWidth: isMobile ? '350px' : 'auto', gap: isMobile ? '0.5rem' : '0.25rem', flexWrap: 'nowrap', overflow: 'visible' }}>
+              {/* For right bot, show face-up card first (leftmost) for visibility */}
+              {position.class.includes('right-') && faceUpCards[player.id] && (
+                <CardComponent 
+                  key={`faceup-${faceUpCards[player.id].rank}-${faceUpCards[player.id].suit}`} 
+                  card={faceUpCards[player.id]} 
+                  small={true}
+                  isPlayable={false}
+                />
+              )}
               {/* Show face-down cards being dealt */}
               {dealingCards[player.id]?.map((card, cardIndex) => (
                 <CardComponent 
@@ -2917,8 +2966,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
                   isPlayable={false}
                 />
               ))}
-              {/* Show face-up card if it's been dealt */}
-              {faceUpCards[player.id] && (
+              {/* For non-right bots, show face-up card last (rightmost) */}
+              {!position.class.includes('right-') && faceUpCards[player.id] && (
                 <CardComponent 
                   key={`faceup-${faceUpCards[player.id].rank}-${faceUpCards[player.id].suit}`} 
                   card={faceUpCards[player.id]} 
@@ -2931,9 +2980,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         );
       })}
         
-      {/* Human Player's Hand Cards Only - Mobile Optimized */}
-      <div className="absolute bottom-4 sm:bottom-6 left-0 right-0 flex justify-center z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="human-cards-container flex justify-center items-center space-x-2 sm:space-x-2 bg-black/30 rounded-2xl p-3 sm:p-4 backdrop-blur-sm border border-amber-500/40 shadow-2xl touch-manipulation">
+      {/* Human Player's Hand Cards Only - Mobile Optimized for Dealing */}
+      <div className="absolute bottom-4 sm:bottom-6 left-0 right-0 flex justify-center z-40" style={{ paddingBottom: typeof window !== 'undefined' && window.innerWidth < 640 ? 'calc(env(safe-area-inset-bottom) + 20px)' : 'env(safe-area-inset-bottom)' }}>
+        <div className="human-cards-container flex justify-center items-center space-x-1 sm:space-x-2 bg-black/40 rounded-2xl p-1 sm:p-4 backdrop-blur-md border border-amber-500/60 shadow-2xl touch-manipulation dealing-phase-mobile" style={{ margin: '0 auto', width: 'fit-content', maxWidth: '96vw' }}>
         {/* Show visual dealing cards if dealing is in progress */}
         {isDealing ? (
           <>

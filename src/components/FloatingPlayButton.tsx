@@ -22,8 +22,9 @@ const FloatingPlayButton: React.FC<FloatingPlayButtonProps> = ({
   // Position button centered horizontally and above human player cards
   const left = Math.max(margin, Math.min(position.x - (buttonWidth / 2), window.innerWidth - buttonWidth - margin));
   
-  // Position button above human player's card area
-  const top = Math.max(margin, Math.min(position.y, window.innerHeight - buttonHeight - margin));
+  // Position button above human player's card area, accounting for action panel on mobile
+  const mobileOffset = isMobile ? 200 : 0; // Account for action panel height
+  const top = Math.max(margin, Math.min(position.y, window.innerHeight - buttonHeight - margin - mobileOffset));
 
   return (
     <div

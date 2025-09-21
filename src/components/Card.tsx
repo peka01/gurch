@@ -16,12 +16,13 @@ interface CardProps {
 const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, isPlayable = true, faceDown = false, humanPlayer = false, isCommander = false }) => {
   const isRed = card.suit === '♥' || card.suit === '♦';
   const colorClass = isRed ? 'text-red-500' : 'text-black';
-  // Mobile-first sizing: optimized for touch and visibility
+  // Mobile-first sizing: optimized for touch and visibility with dealing phase support
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
   const sizeClass = small 
-    ? 'w-16 h-24 sm:w-16 sm:h-24 text-base sm:text-base' // Optimized small cards
+    ? (isMobile ? 'w-14 h-20 text-xs' : 'w-16 h-24 sm:w-16 sm:h-24 text-sm sm:text-base') // Compact small cards for mobile dealing
     : humanPlayer
-    ? 'w-24 h-36 sm:w-24 sm:h-36 text-xl sm:text-2xl' // Mobile-optimized human cards
-    : 'w-14 h-20 sm:w-32 sm:h-44 text-sm sm:text-2xl'; // Compact bot cards for mobile space efficiency
+    ? (isMobile ? 'w-12 h-16 text-xs' : 'w-14 h-20 sm:w-32 sm:h-44 text-xs sm:text-2xl') // Ultra-compact for mobile dealing
+    : (isMobile ? 'w-12 h-16 text-xs' : 'w-14 h-20 sm:w-32 sm:h-44 text-xs sm:text-2xl'); // Ultra-compact bot cards
 
   // If face down, render a face-down card
   if (faceDown) {
@@ -130,7 +131,7 @@ const CardComponent: React.FC<CardProps> = ({ card, isSelected, onClick, small, 
       {getSelectionIndicator()}
       
       <div className="text-left font-bold text-sm sm:text-2xl">{card.rank}</div>
-      <div className={`text-center font-bold ${small ? 'text-3xl sm:text-3xl' : humanPlayer ? 'text-4xl sm:text-4xl' : 'text-2xl sm:text-5xl'}`}>{card.suit}</div>
+      <div className={`text-center font-bold ${small ? 'text-3xl sm:text-3xl' : 'text-2xl sm:text-5xl'}`}>{card.suit}</div>
       <div className="text-right font-bold transform rotate-180 text-sm sm:text-2xl">{card.rank}</div>
       
       {/* Hover effect overlay */}

@@ -131,8 +131,11 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const panelRef = useRef<HTMLDivElement>(null);
 
-    // Drag functionality
+    // Drag functionality (desktop only)
     const handleMouseDown = (e: React.MouseEvent) => {
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+        if (isMobile) return; // No dragging on mobile
+        
         if (e.target === panelRef.current || (e.target as HTMLElement).closest('.drag-handle')) {
             setIsDragging(true);
             setDragStart({
@@ -413,37 +416,83 @@ const ActionPanel: React.FC<ActionPanelProps> = (props) => {
     const content = renderContent();
     if (!content) return null;
 
-    return (
-        <div 
-            ref={panelRef}
-            className="fixed inset-0 flex items-center justify-center z-40 pointer-events-none"
-        >
+    // Mobile-first responsive design
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+    
+    if (isMobile) {
+        // Mobile: Bottom slide-up panel (thumb-friendly, non-blocking)
+        return (
             <div 
-                className="pointer-events-auto"
-            >
-            <div 
-                className="bg-gradient-to-r from-amber-800/90 to-amber-900/90 backdrop-blur-md border-2 border-amber-400/70 rounded-xl shadow-2xl p-3 sm:p-4 text-center min-w-[280px] sm:min-w-[400px] max-w-[90vw] sm:max-w-[600px]"
-                style={{
-                    backgroundColor: 'rgba(146, 64, 14, 0.9)', // Fallback amber-800/90
-                    backgroundImage: 'linear-gradient(to right, rgba(146, 64, 14, 0.9), rgba(120, 53, 15, 0.9))' // Fallback gradient
+                ref={panelRef}
+                className="action-panel-mobile fixed bottom-0 left-0 right-0 z-45 pointer-events-auto transform transition-transform duration-300"
+                style={{ 
+                    paddingBottom: 'env(safe-area-inset-bottom)',
+                    transform: isDragging ? 'translateY(0)' : 'translateY(0)',
+                    maxHeight: '180px' // Compact height
                 }}
             >
-                <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
-                    {timer > 0 && (
-                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-red-600 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold border-2 border-white shadow-lg">
-                            {timer}
+                <div className="bg-gradient-to-t from-amber-900/95 to-amber-800/95 backdrop-blur-lg border-t-2 border-amber-400/70 shadow-2xl">
+                    {/* Header with drag handle and status - compact */}
+                    <div className="flex items-center justify-between px-3 py-1 border-b border-amber-600/30">
+                        <div className="flex items-center gap-2">
+                            {timer > 0 && (
+                                <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-xs font-bold border border-white shadow-lg">
+                                    {timer}
+                                </div>
+                            )}
+                            <div className="w-5 h-5 bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center text-xs">
+                                🎯
+                            </div>
+                            <div className="text-amber-200 text-xs font-semibold">ACTION REQUIRED</div>
                         </div>
-                    )}
-                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center text-xs sm:text-sm">
-                        🎯
+                        <div className="w-8 h-1 bg-amber-400/50 rounded-full"></div>
                     </div>
-                    <div className="text-amber-200 text-xs sm:text-sm font-semibold">ACTION REQUIRED</div>
+                    
+                    {/* Content area - ultra-compact mobile */}
+                    <div className="p-2 max-h-32 overflow-y-auto">
+                        <div className="mobile-action-content text-sm">
+                            {content}
+                        </div>
+                    </div>
                 </div>
-                {content}
             </div>
+        );
+    } else {
+        // Desktop: Center modal (original design works well for mouse/keyboard)
+        return (
+            <div 
+                ref={panelRef}
+                className="fixed inset-0 flex items-center justify-center z-40 pointer-events-none"
+                style={{
+                    transform: `translate(${position.x}px, ${position.y}px)`
+                }}
+                onMouseDown={handleMouseDown}
+            >
+                <div className="pointer-events-auto">
+                    <div 
+                        className="bg-gradient-to-r from-amber-800/90 to-amber-900/90 backdrop-blur-md border-2 border-amber-400/70 rounded-xl shadow-2xl p-3 sm:p-4 text-center min-w-[280px] sm:min-w-[400px] max-w-[90vw] sm:max-w-[600px] cursor-move"
+                        style={{
+                            backgroundColor: 'rgba(146, 64, 14, 0.9)',
+                            backgroundImage: 'linear-gradient(to right, rgba(146, 64, 14, 0.9), rgba(120, 53, 15, 0.9))'
+                        }}
+                    >
+                        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
+                            {timer > 0 && (
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-red-600 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold border-2 border-white shadow-lg">
+                                    {timer}
+                                </div>
+                            )}
+                            <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center text-xs sm:text-sm">
+                                🎯
+                            </div>
+                            <div className="text-amber-200 text-xs sm:text-sm font-semibold">ACTION REQUIRED</div>
+                        </div>
+                        {content}
+                    </div>
+                </div>
             </div>
-        </div>
-    )
+        );
+    }
 }
 
 export default ActionPanel;

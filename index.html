@@ -37,26 +37,9 @@
       
       /* Mobile-first responsive design */
       @media (max-width: 640px) {
-        /* Optimized card components for mobile */
-        .card-component {
-          min-height: 144px; /* h-36 = 144px for human cards */
-          min-width: 96px;   /* w-24 = 96px for human cards */
-          transform-origin: center;
-          transition: transform 0.2s ease;
-        }
+        /* REMOVED CONFLICTING RULES - Using ultra-compact sizes below */
         
-        /* Bot cards get compact mobile sizing */
-        .card-component:not(.human-card) {
-          min-height: 80px;  /* h-20 = 80px for bot cards */
-          min-width: 56px;   /* w-14 = 56px for bot cards */
-        }
-        
-        /* Optimized played cards for mobile - much smaller for space efficiency */
-        .played-cards-area .card-component {
-          min-height: 80px;  /* h-20 = 80px - half the previous size */
-          min-width: 56px;   /* w-14 = 56px - half the previous size */
-          transform: scale(1.0); /* No additional scaling needed */
-        }
+        /* Optimized played cards for mobile - override in dealing section below */
         
         /* Adjust spacing and layout for compact played cards */
         .played-cards-area {
@@ -86,8 +69,9 @@
           pointer-events: auto;
           cursor: pointer;
         }
-        
-        /* iOS safe areas and portrait mode optimization */
+      }
+      
+      /* iOS safe areas and portrait mode optimization */
         body {
           padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
         }
@@ -98,55 +82,179 @@
             padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
           }
           
-          /* Ensure cards are always visible in portrait */
+          /* Ensure cards are always visible above action panel */
           .human-cards-container {
             max-height: calc(100vh - 200px);
             max-height: calc(100dvh - 200px);
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
           }
           
-          /* Mobile optimization for played cards */
+          /* Compact action panel for mobile */
+          .action-panel-mobile {
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 180px; /* Much more compact */
+          }
+          
+          /* Visible game area above action panel */
+          .mobile-game-area {
+            padding-bottom: 200px; /* Space for action panel + player box */
+          }
+          
+          /* Mobile action panel button layout optimization */
+          
+          .mobile-action-content p {
+            text-align: center !important;
+            margin-bottom: 0.5rem !important;
+            font-size: 0.75rem !important;
+            line-height: 1rem !important;
+          }
+          
+          .mobile-action-content .flex.flex-col {
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+            justify-content: center !important;
+            align-items: center !important;
+          }
+          
+          .mobile-action-content .space-y-2 > * + *,
+          .mobile-action-content .space-y-3 > * + * {
+            margin-top: 0 !important;
+          }
+          
+          .mobile-action-content button {
+            flex: 1 1 auto !important;
+            min-width: 100px !important;
+            max-width: 140px !important;
+            padding: 8px 12px !important;
+            font-size: 0.875rem !important;
+          }
+        }
+        
+        /* Mobile optimization for played cards and dealing */
+        @media (max-width: 640px) {
           .played-cards-area {
-            transform: scale(0.9); /* Slightly smaller for better fit */
+            transform: scale(0.9); /* Slightly smaller for better fit on mobile only */
             min-width: 120px; /* Maintain minimum readability */
           }
-          
-          /* Ensure bot cards have distinct areas on mobile */
-          @media (max-width: 640px) {
-            .played-cards-area:not([class*="bottom-"]) {
-              max-width: 40vw !important; /* Smaller width to prevent overlap */
-            }
-            
-            /* Left bot cards stay on left side */
-            .played-cards-area[class*="left-"] {
-              left: 16px !important; /* Close to left edge */
-            }
-            
-            /* Right bot cards stay on right side */
-            .played-cards-area[class*="right-"] {
-              right: 16px !important; /* Close to right edge */
-            }
+        }
+        
+        /* COMPREHENSIVE MOBILE DEALING PHASE - HIGHEST SPECIFICITY */
+        @media (max-width: 640px) {
+          /* FORCE COMPACT CARDS - Override all previous rules */
+          .card-component,
+          .human-cards-container .card-component,
+          .bot-dealing-area .card-component,
+          .dealing-phase-mobile .card-component {
+            min-width: 48px !important;
+            min-height: 64px !important;
+            max-width: 56px !important;
+            max-height: 76px !important;
+            transform: none !important; /* Remove all scaling */
+            overflow: hidden !important; /* Ensure symbols stay inside */
+            padding: 1px !important; /* Minimal padding for symbols */
           }
           
-          /* Slightly smaller cards for very small portrait screens */
-          @media (max-height: 700px) {
-            .card-component.human-card {
-              transform: scale(0.9);
-            }
-            
-            .human-cards-container {
-              padding: 0.5rem !important;
-            }
+          /* Compact dealing area with generous spacing for 6 cards */
+          .dealing-cards-area,
+          .bot-dealing-area {
+            transform: scale(0.9) !important;
+            max-width: 95vw !important;
+            min-width: 350px !important; /* Wide enough for 6 cards with spacing */
           }
           
-          /* Even smaller for very constrained screens */
-          @media (max-height: 600px) {
-            .card-component.human-card {
-              transform: scale(0.8);
-            }
-            
-            .human-cards-container {
-              padding: 0.25rem !important;
-            }
+          /* Fix bot card spacing to prevent overlap - generous spacing */
+          .bot-dealing-area > div:not(.absolute) {
+            padding: 0.5rem !important;
+            gap: 0.5rem !important;
+            min-width: 350px !important;
+            flex-wrap: nowrap !important;
+            overflow: visible !important;
+          }
+          
+          /* Player identification styling */
+          .bot-dealing-area {
+            position: relative !important;
+          }
+          
+          /* Enhanced visual ownership indicators */
+          .bot-dealing-area .absolute {
+            z-index: 60 !important;
+          }
+          
+          .bot-dealing-area .card-component {
+            margin: 0 3px !important;
+            flex-shrink: 0 !important;
+            min-width: 48px !important;
+            max-width: 52px !important;
+          }
+          
+          /* Ultra-compact human cards container */
+          .human-cards-container {
+            overflow-x: auto !important;
+            overflow-y: visible !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+            max-width: 96vw !important;
+            padding: 0.25rem !important;
+          }
+          
+          .human-cards-container::-webkit-scrollbar {
+            display: none !important;
+          }
+          
+          /* Better card spacing during dealing */
+          .human-cards-container .card-component {
+            margin: 0 1px !important;
+            flex-shrink: 0 !important;
+          }
+          
+          /* Enhanced visibility for dealing phase */
+          .dealing-phase-mobile {
+            padding: 0.25rem !important;
+            background: rgba(0, 0, 0, 0.4) !important;
+            backdrop-filter: blur(8px) !important;
+          }
+        }
+        
+        /* Bot cards positioned above their player boxes on mobile, to the side on desktop */
+        @media (max-width: 640px) {
+          .played-cards-area:not([class*="bottom-"]) {
+            max-width: 90vw !important; /* Allow full width for cards above boxes */
+          }
+        }
+        
+        /* Desktop positioning for bot played cards */
+        @media (min-width: 641px) {
+          .played-cards-area:not([class*="bottom-"]) {
+            max-width: 200px !important; /* More space for side positioning */
+            transform: none !important; /* Override mobile scaling */
+          }
+        }
+        
+        /* Slightly smaller cards for very small portrait screens */
+        @media (max-height: 700px) {
+          .card-component.human-card {
+            transform: scale(0.9);
+          }
+          
+          .human-cards-container {
+            padding: 0.5rem !important;
+          }
+        }
+        
+        /* Even smaller for very constrained screens */
+        @media (max-height: 600px) {
+          .card-component.human-card {
+            transform: scale(0.8);
+          }
+          
+          .human-cards-container {
+            padding: 0.25rem !important;
           }
         }
         
@@ -220,25 +328,8 @@
             transition-duration: 0.01ms !important;
           }
         }
-      }
-      
-      /* Portrait orientation optimization */
-      @media (max-width: 640px) and (orientation: portrait) {
-        .card-component {
-          transform: scale(1.1);
-        }
-      }
-      
-      /* Landscape optimization for mobile */
-      @media (max-width: 768px) and (orientation: landscape) {
-        .card-component {
-          transform: scale(0.9);
-        }
         
-        body {
-          padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
-        }
-      }
+        /* REMOVED CONFLICTING TRANSFORM SCALING - Using compact sizes instead */
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />

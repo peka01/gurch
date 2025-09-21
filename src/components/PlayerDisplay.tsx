@@ -116,9 +116,9 @@ const PlayerDisplay: React.FC<PlayerDisplayProps> = ({ player, isCurrentPlayer, 
         
         {/* No dealing cards shown inside player boxes - they're now displayed outside */}
         
-        {/* Show swapping cards with animation */}
+        {/* Show swapping cards with animation - positioned like played cards */}
         {swappingCards && swappingCards.length > 0 && (
-          <div className="absolute -top-16 sm:-top-20 left-1/2 transform -translate-x-1/2 bg-yellow-500/90 p-1 sm:p-2 rounded-lg shadow-lg z-20">
+          <div className="absolute -top-8 sm:-top-10 left-1/2 transform -translate-x-1/2 bg-yellow-500/90 p-1 sm:p-2 rounded-lg shadow-lg z-20">
             <p className="text-xs font-bold text-black mb-1 hidden sm:block">Swapping:</p>
             <div className="flex space-x-0.5 sm:space-x-1">
               {swappingCards.map((card, index) => (
