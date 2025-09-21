@@ -13,14 +13,18 @@ const FloatingPlayButton: React.FC<FloatingPlayButtonProps> = ({
   disabled = false, 
   cardCount 
 }) => {
-  // Ensure button stays within viewport bounds
-  const buttonWidth = 200; // Approximate button width
-  const buttonHeight = 60; // Approximate button height
-  const margin = 20;
+  // Ensure button stays within viewport bounds with mobile-friendly positioning
+  const isMobile = window.innerWidth < 640; // sm breakpoint
+  const buttonWidth = isMobile ? 160 : 200; // Smaller on mobile
+  const buttonHeight = isMobile ? 50 : 60; // Smaller on mobile
+  const margin = isMobile ? 10 : 20;
   
-  // Position button slightly offset from the click position
+  // Position button with mobile-specific adjustments
   const left = Math.max(margin, Math.min(position.x + 30, window.innerWidth - buttonWidth - margin));
-  const top = Math.max(margin, Math.min(position.y - 20, window.innerHeight - buttonHeight - margin));
+  
+  // On mobile, position button higher up to avoid being blocked by bottom UI elements
+  const mobileVerticalOffset = isMobile ? Math.min(position.y - 80, window.innerHeight * 0.4) : position.y - 20;
+  const top = Math.max(margin, Math.min(mobileVerticalOffset, window.innerHeight - buttonHeight - margin));
 
   return (
     <div
@@ -36,11 +40,12 @@ const FloatingPlayButton: React.FC<FloatingPlayButtonProps> = ({
         disabled={disabled}
         className={`
           bg-gradient-to-br from-green-600 to-green-700 hover:from-green-500 hover:to-green-600
-          text-white font-bold py-3 px-6 rounded-xl shadow-lg border-2 border-green-400
+          text-white font-bold rounded-xl shadow-lg border-2 border-green-400
           transition-all duration-200 transform hover:scale-105 active:scale-95
           disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
           focus:outline-none focus:ring-4 focus:ring-green-400/30
           backdrop-blur-sm
+          ${isMobile ? 'py-2 px-4 text-sm' : 'py-3 px-6 text-base'}
         `}
         style={{
           backgroundColor: disabled ? '#6b7280' : '#059669', // Fallback green-600
@@ -49,7 +54,7 @@ const FloatingPlayButton: React.FC<FloatingPlayButtonProps> = ({
         }}
       >
         <div className="flex items-center space-x-2">
-          <span className="text-lg">🎮</span>
+          <span className={isMobile ? "text-base" : "text-lg"}>🎮</span>
           <span>Play Card{cardCount > 1 ? 's' : ''} ({cardCount})</span>
         </div>
       </button>

@@ -2418,7 +2418,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
           setShowFloatingPlayButton(true);
           // Set button position to current mouse position when first card is selected
           if (prev.length === 0) {
-            setButtonPosition({ x: mousePosition.x, y: mousePosition.y });
+            const isMobile = window.innerWidth < 640;
+            // On mobile, position button higher and more centered for better accessibility
+            const buttonX = isMobile ? window.innerWidth / 2 : mousePosition.x;
+            const buttonY = isMobile ? window.innerHeight * 0.3 : mousePosition.y;
+            setButtonPosition({ x: buttonX, y: buttonY });
           }
         }
         
@@ -2665,7 +2669,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
       </div>
       
         {/* Gurch Crown Logo - Embroidered on Table Cloth */}
-        <div className="absolute inset-0 flex items-center justify-center z-30">
+        <div className="absolute inset-0 flex items-center justify-center z-0">
           <div className="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center">
             {/* Font Awesome Crown - Bright Yellow Filled */}
             <i 
