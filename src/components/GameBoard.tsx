@@ -1592,9 +1592,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     const leadHand = getCommanderCards(); // Use commander's cards, not most recent cards
 
     console.log(`[VALIDATION] Player: ${player.name}`);
-    console.log(`[VALIDATION] Lead Hand:`, leadHand.map(c => c.rank));
-    console.log(`[VALIDATION] Player Hand:`, player.hand.map(c => c.rank));
-    console.log(`[VALIDATION] Played Cards:`, cards.map(c => c.rank));
+    console.log(`[VALIDATION] Lead Hand:`, leadHand.map(c => `${c.rank}(${c.value})`));
+    console.log(`[VALIDATION] Player Hand:`, player.hand.map(c => `${c.rank}(${c.value})`));
+    console.log(`[VALIDATION] Played Cards:`, cards.map(c => `${c.rank}(${c.value})`));
 
     if (cards.length === 0) {
       console.log("[VALIDATION] FAILED: No cards played.");
@@ -1634,12 +1634,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
     const canBeatAndSacrifice = higherCards.length > 0;
     console.log(`[VALIDATION] Can 'beat and sacrifice'? ${canBeatAndSacrifice}`);
 
-    // Check if the played hand can beat or match the lead
-    const highestPlayedCard = Math.max(...cards.map(c => c.value));
-    const highestLeadCard = Math.max(...leadHand.map(c => c.value));
-    const canBeatOrMatch = highestPlayedCard >= highestLeadCard;
-    
-    console.log(`[VALIDATION] Highest played card: ${highestPlayedCard}, Highest lead card: ${highestLeadCard}, Can beat or match: ${canBeatOrMatch}`);
+    // Check if this is a valid winning play (same rank, higher value)
+    const isValidWinningPlay = cards.every(c => c.rank === cards[0].rank) && cards[0].value > leadHand[0].value;
+    console.log(`[VALIDATION] Checking winning play: all same rank = ${cards.every(c => c.rank === cards[0].rank)}, higher value = ${cards[0].value > leadHand[0].value} (${cards[0].value} > ${leadHand[0].value})`);
+    if (isValidWinningPlay) {
+        console.log("[VALIDATION] PASSED: Valid winning play - same rank, higher value.");
+        return true;
+    }
     
     // ALWAYS allow equal-value plays (same value as lead)
     const isEqualPlay = cards[0].value === leadHand[0].value && cards.every(c => c.value === cards[0].value);
@@ -1648,17 +1649,24 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         return true;
     }
     
+    // Check if the played hand can beat or match the lead
+    const highestPlayedCard = Math.max(...cards.map(c => c.value));
+    const highestLeadCard = Math.max(...leadHand.map(c => c.value));
+    const canBeatOrMatch = highestPlayedCard >= highestLeadCard;
+    
+    console.log(`[VALIDATION] Highest played card: ${highestPlayedCard}, Highest lead card: ${highestLeadCard}, Can beat or match: ${canBeatOrMatch}`);
+    
     if (canBeatOrMatch) {
         // Check if all played cards can beat the lead (normal beating play)
         const allCardsBeatLead = cards.every(c => c.value >= leadHand[0].value);
         
-        if (allCardsBeatLead) {
-            console.log("[VALIDATION] PASSED: All played cards beat or match the lead.");
+        if (allCardsBeatLead && cards.every(c => c.rank === cards[0].rank)) {
+            console.log("[VALIDATION] PASSED: All played cards beat or match the lead with same rank.");
             return true;
         }
         
         // Apply "beat/equal and sacrifice" rule if player has higher/equal cards but can't make a valid set
-        if ((canBeatAndSacrifice || equalPlays.length > 0) && !winningPlays.length) {
+        if ((canBeatAndSacrifice || equalPlays.length > 0) && winningPlays.length === 0) {
             // Player must play a higher/equal card + lowest cards to match count
             const hasHigherCard = cards.some(c => c.value > leadHand[0].value);
             const hasEqualCard = cards.some(c => c.value === leadHand[0].value);
@@ -1686,9 +1694,19 @@ const GameBoard: React.FC<GameBoardProps> = ({ players: initialPlayers, onQuit }
         return true;
     }
 
-    // A player MUST beat the hand if they are able to.
-    if (winningPlays.length > 0 || canBeatAndSacrifice) {
+    // Check if player had winning moves available but didn't use them
+    const playedCardsRank = cards[0].rank;
+    const playedCardsValue = cards[0].value;
+    const playedValidWinningMove = winningPlays.some(group => 
+        group[0].rank === playedCardsRank && group[0].value === playedCardsValue
+    );
+    
+    // A player MUST beat the hand if they are able to - but only fail if they didn't play a winning move
+    const currentIsEqualPlay = cards[0].value === leadHand[0].value && cards.every(c => c.value === cards[0].value);
+    if (winningPlays.length > 0 && !playedValidWinningMove && !currentIsEqualPlay) {
         console.log("[VALIDATION] FAILED: Player had a winning move but played something else.");
+        console.log(`[VALIDATION] Available winning plays: ${winningPlays.map(g => g[0].rank).join(', ')}`);
+        console.log(`[VALIDATION] Player played: ${playedCardsRank}`);
         return false;
     } else if (equalPlays.length > 0) {
         // Player has equal-value plays available but didn't play equal cards
